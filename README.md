@@ -1,86 +1,102 @@
-# TorVizLib
+<div align="center">
+
+# torchood
+
+<img src="./images/logo.jpg"  style="width:20%">
 
 
-Contains the utils, models etc for building vision based for training and vizualizing pytorch CNN models
+[![python](https://img.shields.io/badge/-Python_3.8_%7C_3.9_%7C_3.10-blue?logo=python&logoColor=white)](https://github.com/pre-commit/pre-commit)
+[![pytorch](https://img.shields.io/badge/PyTorch_1.10+-ee4c2c?logo=pytorch&logoColor=white)](https://pytorch.org/get-started/locally/)
+<!-- [![lightning](https://img.shields.io/badge/-Lightning_1.9+-792ee5?logo=pytorchlightning&logoColor=white)](https://pytorchlightning.ai/) -->
+[![black](https://img.shields.io/badge/Code%20Style-Black-black.svg?labelColor=gray)](https://black.readthedocs.io/en/stable/)
+[![isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336)](https://pycqa.github.io/isort/) <br>
+[![license](https://img.shields.io/badge/License-MIT-green.svg?labelColor=gray)](https://github.com/ashleve/lightning-hydra-template#license)
+[![PRs](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/ashleve/lightning-hydra-template/pulls)
 
+__torchood: A User-Friendly Wrapper for Torch, Making Neural Network Training Effortless__ <br> 
+`Jumpstart your deep learning endeavors and rapidly prototype custom projects with torchood 🚀⚡🔥`<br>
+
+</div>
+
+## Project Structure 
+
+```bash
+├───torchood
+│   │   dataset.py
+│   │   trainer.py
+│   │   __init__.py
+│   │
+│   ├───models
+│   │   │   common.py
+│   │   │   custom_resnet.py
+│   │   │   mini_resnet.py
+│   │   │   resnet.py
+│   │   │   __init__.py
+│   │
+│   ├───utils
+│   │       gradcam.py
+│   │       misc.py
+│   │       plotting.py
+│   │       __init__.py
 ```
-├── dataloaders
-│   ├── CIFAR10.py
-│   ├── tiny_image_net.py
-│ 
-├── models
-│   ├── custom_resnet.py
-│   └── resnet.py
-│  
-├── utils
-│    ├── datastats.py
-│    ├── dump_list.py
-│    ├── gradcam.py
-│    ├── lr_finder.py
-│    └── plotting.py
-│ 
-│   
-├── LICENSE
-├── main.py
-└── README.md
+
+## 🚀  Quickstart
+
+```bash
+# clone project
+git clone https://github.com/anantgupta129/TorcHood.git
+cd TorcHood
+
+# [OPTIONAL] create conda environment
+conda create -n myenv python=3.10
+conda activate myenv
+
+# install pytorch according to instructions
+# https://pytorch.org/get-started/
+
+! python setup.py sdist
+! pip install .
 ```
 
-USAGE
------------
+## ⚡ Features
 
-- Dataloaders contains lodaer function to laod data for pytorch Currently for Tiny Image Net 200 and CIDAR10 dataset
-- Models contains custom ResNet, ResNet 18 and ResNET 34
-- utils has functon used for  Gradcam and Vizulation , Finding Learning Rate for dataset, and saving history locally
-- main.py is used for traininf, testing and saving the model
-```
-main.py
+- __LR finder__
+    ```bash
+    from torch.nn import CrossEntropyLoss
+    from torchood.utils.misc import find_lr
 
-  def fit_model(net, optimizer, device, NUM_EPOCHS,train_loader, test_loader, use_l1=False, scheduler=None, save_best=False):
-    """Fit the model
-    Args:
-        net (instance): torch model instance of defined model
-        optimizer (function): optimizer to be used
-        device (str): "cpu" or "cuda" device to be used
-        NUM_EPOCHS (int): number of epochs for model to be trained
-        train_loader (instance): Torch Dataloader instance for trainingset
-        test_loader (instance): Torch Dataloader instance for testset
-        use_l1 (bool, optional): L1 Regularization method set True to use. Defaults to False.
-        scheduler (function, optional): scheduler to be used. Defaults to None.
-        save_best (bool, optional): If save best model to model.pt file, paramater validation loss will be monitered
-    Returns:
-        (model, list): trained model and training logs
-    """
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+
+    kwargs = {"end_lr":10, "num_iter": 200, "step_mode":"exp"}
+    find_lr(model, device, optimizer, criterion=CrossEntropyLoss(), dataloader=train_loader, **kwargs)
+    ```
+
+- __grad cam__ 
+
+    ```bash
+    from torchood.utils.gradcam import plot_cam_on_image
+
+    mean = (0.49139968, 0.48215841, 0.44653091)
+    std = (0.24703223, 0.24348513, 0.26158784)
+    plot_cam_on_image(model, [model.layer4[1]], imgs_list, {"mean": mean, "std": std})
+    ```
+
+- __Training & training History__
+    ```bash
+    from torchood.trainer import Trainer
+    trainer = Trainer(model, device, optimizer, scheduler)
+    for epoch in range(1, num_epochs + 1):
+        print(f"Epoch {epoch}")
+        trainer.train(train_loader)
+        trainer.evaluate(test_loader)
     
-  def train(model, device, train_loader, scheduler, optimizer, use_l1=False, lambda_l1=0.01):
-    """Function to train the model
-    Args:
-        model (instance): torch model instance of defined model
-        device (str): "cpu" or "cuda" device to be used
-        train_loader (instance): Torch Dataloader instance for trainingset
-        scheduler (function): scheduler to be used
-        optimizer (function): optimizer to be used
-        use_l1 (bool, optional): L1 Regularization method set True to use . Defaults to False.
-        lambda_l1 (float, optional): Regularization parameter of L1. Defaults to 0.01.
-    Returns:
-        float: accuracy and loss values
-    """
-    
-  def test(model, device, test_loader):
-    """put model in eval mode and test it
-    Args:
-        model (instance): torch model instance of defined model
-        device (str): "cpu" or "cuda" device to be used
-        test_loader (instance): Torch Dataloader instance for testset
-    Returns:
-        float: accuracy and loss values
-    """
-    
-  def save_model(model, epoch, optimizer, path):
-    """Save torch model in .pt format
-    Args:
-        model (instace): torch instance of model to be saved
-        epoch (int): epoch num
-        optimizer (instance): torch optimizer
-        path (str): model saving path
-    """
-```
+    trainer.plot_history()
+    ```
+
+- Supports the CIFAR10 dataset as a sample. In the future, we plan to add support for additional    datasets.
+- Supports sample models
+
+
+## 🤝 Contributing
+
+Contributions are invited! Don't hesitate to submit a pull request.

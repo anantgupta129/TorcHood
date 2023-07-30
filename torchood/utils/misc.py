@@ -28,9 +28,7 @@ def per_class_accuracy(model: Any, device: torch.device, data_loader: DataLoader
 
     print("[x] Accuracy of ::")
     for i in range(nc):
-        print(
-            "\t[*] %8s : %2d %%" % (classes[i], 100 * class_correct[i] / class_total[i])
-        )
+        print("\t[*] %8s : %2d %%" % (classes[i], 100 * class_correct[i] / class_total[i]))
 
 
 def find_lr(

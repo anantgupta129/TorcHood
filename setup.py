@@ -17,6 +17,6 @@ setup(
         "torchinfo",
         "grad-cam",
         "pytorch-lightning",
-        "torchmetrics"
+        "torchmetrics",
     ],
 )

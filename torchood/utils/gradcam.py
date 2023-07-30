@@ -15,9 +15,7 @@ def plot_cam_on_image(
     rows, cols = int(len(imgs_list) / 5), 5
     figure = plt.figure(figsize=(cols * 2, rows * 2))
 
-    cam = GradCAM(
-        model=model, target_layers=target_layer, use_cuda=torch.cuda.is_available()
-    )
+    cam = GradCAM(model=model, target_layers=target_layer, use_cuda=torch.cuda.is_available())
     cam.batch_size = 32
 
     for i, img in enumerate(imgs_list):

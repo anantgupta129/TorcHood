@@ -1,11 +1,11 @@
 from typing import Optional
 
 import albumentations as A
+from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader, Dataset
 from torchvision import datasets
 
-from pytorch_lightning import LightningDataModule
-from .components.cifar10 import make_transform, CIFAR10
+from .components.cifar10 import CIFAR10, make_transform
 
 
 class CIFAR10DataModule(LightningDataModule):
@@ -15,7 +15,7 @@ class CIFAR10DataModule(LightningDataModule):
         batch_size: int = 512,
         num_workers: int = 0,
         pin_memory: bool = False,
-        train_augments: A.Compose = None
+        train_augments: A.Compose | None = None,
     ):
         super().__init__()
 
@@ -23,9 +23,11 @@ class CIFAR10DataModule(LightningDataModule):
         # also ensures init params will be stored in ckpt
         self.save_hyperparameters(logger=False)
 
-        self.train_transforms = make_transform("train") if train_augments is None else train_augments
+        self.train_transforms = (
+            make_transform("train") if train_augments is None else train_augments
+        )
         self.val_transforms = make_transform("val")
-        
+
         self.data_train: Optional[Dataset] = None
         self.data_val: Optional[Dataset] = None
 
@@ -43,7 +45,6 @@ class CIFAR10DataModule(LightningDataModule):
         if not self.data_train and not self.data_val:
             self.data_train = datasets.CIFAR10(self.hparams.data_dir, train=True)
             self.data_val = datasets.CIFAR10(self.hparams.data_dir, train=False)
-            
 
     def train_dataloader(self):
         return DataLoader(

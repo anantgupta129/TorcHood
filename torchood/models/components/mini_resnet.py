@@ -6,9 +6,7 @@ from .common import BaseNet
 
 
 class ResBlock(nn.Module):
-    def __init__(
-        self, in_planes: int, out_planes: int, stride: int = 1, drop: float = 0
-    ) -> None:
+    def __init__(self, in_planes: int, out_planes: int, stride: int = 1, drop: float = 0) -> None:
         super().__init__()
         self.dropout = nn.Dropout2d(drop)
 

@@ -11,9 +11,7 @@ def GetCorrectPredCount(pPrediction: torch, pLabels: torch.Tensor):
 
 
 class Trainer:
-    def __init__(
-        self, model: nn.Module, device: torch.device, optimizer, scheduler=None
-    ) -> None:
+    def __init__(self, model: nn.Module, device: torch.device, optimizer, scheduler=None) -> None:
         self.device = device
         self.model = model
         self.optimizer = optimizer
@@ -72,9 +70,7 @@ class Trainer:
                 data, target = data.to(self.device), target.to(self.device)
 
                 output = self.model(data)
-                test_loss += self.test_criterion(
-                    output, target
-                ).item()  # sum up batch loss
+                test_loss += self.test_criterion(output, target).item()  # sum up batch loss
 
                 correct += GetCorrectPredCount(output, target)
 
@@ -130,9 +126,7 @@ class Trainer:
 
         # For accuracy and epochs
         plt.subplot(1, 2, 2)
-        plt.plot(
-            self.train_acc, label="Training Accuracy"
-        )  # plotting the training accuracy
+        plt.plot(self.train_acc, label="Training Accuracy")  # plotting the training accuracy
         plt.plot(self.test_acc, label="Test Accuracy")  # plotting the testing accuracy
         # putting the labels in plot
         plt.title("Accuracy vs Epoch")

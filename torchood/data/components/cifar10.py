@@ -23,9 +23,7 @@ def make_transform(image_set: str) -> A.Compose:
                 ),
                 A.HorizontalFlip(),
                 # A.ShiftScaleRotate(),
-                A.CoarseDropout(
-                    1, 16, 16, 1, 16, 16, fill_value=mean, mask_fill_value=None
-                ),
+                A.CoarseDropout(1, 16, 16, 1, 16, 16, fill_value=mean, mask_fill_value=None),
                 A.Normalize(mean, std),
                 ToTensorV2(),
             ]

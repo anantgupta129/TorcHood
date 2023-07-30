@@ -4,8 +4,7 @@ import albumentations as A
 import numpy as np
 import torch
 from albumentations.pytorch import ToTensorV2
-from torch.utils.data import DataLoader, Dataset
-from torchvision import datasets
+from torch.utils.data import Dataset
 
 
 def make_transform(image_set: str) -> A.Compose:
@@ -57,33 +56,3 @@ class CIFAR10(Dataset):
         # apply augmentation
         image = self.transforms(image=np.array(image))["image"]
         return image, label
-
-
-def build_cifar(
-    set: str, augments: A.Compose = None, datadir: str = "./data", **kwargs
-) -> DataLoader:
-    ds = datasets.CIFAR10(
-        datadir,
-        train=True if set == "train" else False,
-        download=True,
-    )
-    transform = make_transform(set) if augments is None else augments
-    data_loader = DataLoader(CIFAR10(ds, transform), **kwargs)
-
-    return data_loader
-
-
-# for debugging
-# if __name__=="__main__":
-#     batch_size = 64
-
-#     kwargs = {
-#         "batch_size": batch_size,
-#         "shuffle": True,
-#         "num_workers": 2,
-#         "pin_memory": True,
-#     }
-
-#     loader = build_cifar('train', **kwargs)
-#     for batch in loader:
-#         break

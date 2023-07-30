@@ -27,7 +27,22 @@ class LitModule(LightningModule):
 
     def configure_optimizers(self) -> Any:
         optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
-        return optimizer
+        num_epochs = self.trainer.max_epochs
+        scheduler = torch.optim.lr_scheduler.OneCycleLR(
+            optimizer,
+            max_lr=1.63e-02,
+            total_steps=self.trainer.estimated_stepping_batches,
+            epochs=num_epochs,
+            pct_start=5 / num_epochs,
+            div_factor=100,
+            three_phase=False,
+            final_div_factor=100,
+            anneal_strategy="linear",
+        )
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {"scheduler": scheduler, "interval": "step"},
+        }
 
     def _step(self, batch: Any) -> Tuple[torch.Tensor]:
         x, y = batch

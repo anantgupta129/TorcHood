@@ -9,21 +9,19 @@ from torchmetrics.classification.accuracy import Accuracy
 
 
 class LitModule(LightningModule):
-    def __init__(self, net: torch.nn.Module) -> None:
+    def __init__(self, net: torch.nn.Module, num_classes: int) -> None:
         super().__init__()
         
         self.net = net
         self.criterion = torch.nn.CrossEntropyLoss() 
 
         # metric objects for calculating and averaging accuracy across batches
-        self.train_acc = Accuracy()
-        self.val_acc = Accuracy()
-        self.test_acc = Accuracy()
+        self.train_acc = Accuracy(task="multiclass", num_classes=num_classes)
+        self.val_acc = Accuracy(task="multiclass", num_classes=num_classes)
 
         # for averaging loss across batches
         self.train_loss = MeanMetric()
         self.val_loss = MeanMetric()
-        self.test_loss = MeanMetric()
         
     
     def forward(self, x: torch.Tensor) -> torch.Tensor:

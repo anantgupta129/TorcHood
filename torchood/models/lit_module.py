@@ -13,7 +13,7 @@ class LitModule(LightningModule):
 
         self.net = net
         self.learning_rate = learning_rate
-        
+
         self.criterion = torch.nn.CrossEntropyLoss()
 
         # metric objects for calculating and averaging accuracy across batches
@@ -41,7 +41,7 @@ class LitModule(LightningModule):
             final_div_factor=100,
             anneal_strategy="linear",
         )
-        lr_scheduler =  {"scheduler": scheduler, "interval": "step"}
+        lr_scheduler = {"scheduler": scheduler, "interval": "step"}
         return [optimizer], [lr_scheduler]
 
     def _step(self, batch: Any) -> Tuple[torch.Tensor]:

@@ -8,10 +8,12 @@ from torchmetrics.classification.accuracy import Accuracy
 
 
 class LitModule(LightningModule):
-    def __init__(self, net: torch.nn.Module, num_classes: int) -> None:
+    def __init__(self, net: torch.nn.Module, num_classes: int, learning_rate: float) -> None:
         super().__init__()
 
         self.net = net
+        self.learning_rate = learning_rate
+        
         self.criterion = torch.nn.CrossEntropyLoss()
 
         # metric objects for calculating and averaging accuracy across batches
@@ -26,11 +28,11 @@ class LitModule(LightningModule):
         return self.net(x)
 
     def configure_optimizers(self) -> Any:
-        optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         num_epochs = self.trainer.max_epochs
         scheduler = torch.optim.lr_scheduler.OneCycleLR(
             optimizer,
-            max_lr=1.63e-02,
+            max_lr=self.learning_rate,
             total_steps=self.trainer.estimated_stepping_batches,
             epochs=num_epochs,
             pct_start=5 / num_epochs,

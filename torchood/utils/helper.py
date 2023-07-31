@@ -4,8 +4,7 @@ from typing import Any, Tuple
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning.callbacks import (LearningRateFinder,
-                                         LearningRateMonitor, RichModelSummary,
-                                         RichProgressBar)
+                                         LearningRateMonitor, RichProgressBar)
 
 
 def auto_find_lr_and_fit(
@@ -17,7 +16,6 @@ def auto_find_lr_and_fit(
     input_shape: tuple = (1, 3, 32, 32),
 ) -> Any:
     callbacks = [
-        RichModelSummary(),
         RichProgressBar(leave=True),
         LearningRateFinder(**lr_finder_args),
         LearningRateMonitor(logging_interval="step"),

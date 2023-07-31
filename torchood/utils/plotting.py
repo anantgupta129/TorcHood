@@ -47,11 +47,11 @@ def plot_misclassified(
     device: torch.device,
     transformations: A.Compose,
     title: str = "Misclassified (pred/ truth)",
-    no_misclf: int = 10,
+    num_misclf: int = 10,
     return_imgs: bool = False,
 ):
     count = 1
-    rows, cols = 2, int(no_misclf / 2)
+    rows, cols = int(num_misclf / 5), 5
     figure = plt.figure(figsize=(cols * 3, rows * 3))
 
     classes = data_loader.dataset.classes

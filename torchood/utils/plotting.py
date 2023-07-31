@@ -77,7 +77,7 @@ def plot_misclassified(
                 plt.imshow(img)
 
                 count += 1
-                if count == no_misclf + 1:
+                if count == num_misclf + 1:
                     break
 
     plt.suptitle(title, fontsize=15)

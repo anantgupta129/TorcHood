@@ -1,8 +1,8 @@
 from typing import Any, Optional, Tuple
 
 import torch
-from pytorch_lightning import LightningModule
-from pytorch_lightning.utilities.types import STEP_OUTPUT
+from lightning.pytorch import LightningModule
+from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torchmetrics import MaxMetric, MeanMetric
 from torchmetrics.classification.accuracy import Accuracy
 

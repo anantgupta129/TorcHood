@@ -1,17 +1,17 @@
 import os
 from typing import Any, Tuple
 
-import pytorch_lightning as pl
+import lightning.pytorch as pl
 import torch
-from pytorch_lightning.callbacks import (LearningRateFinder,
+from lightning.pytorch.callbacks import (LearningRateFinder,
                                          LearningRateMonitor, RichProgressBar)
 
 
 def auto_find_lr_and_fit(
     model: pl.LightningModule,
     datamodule: pl.LightningDataModule,
-    lr_finder_args: dict,
     trainer_args: dict,
+    lr_finder_args: dict = {},
     save_traced_model: bool = False,
     input_shape: tuple = (1, 3, 32, 32),
 ) -> Any:

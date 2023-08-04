@@ -12,11 +12,11 @@ setup(
     install_requires=[
         "torch==2.0.1",
         "torchvision==0.15.2",
+        "lightning=2.0.6",
         "albumentations==1.3.1",
         "torch-lr-finder",
         "torchinfo",
         "grad-cam",
-        "pytorch-lightning",
         "torchmetrics",
     ],
 )

@@ -3,8 +3,11 @@ from typing import Any, Tuple
 
 import lightning.pytorch as pl
 import torch
-from lightning.pytorch.callbacks import (LearningRateFinder,
-                                         LearningRateMonitor, RichProgressBar)
+from lightning.pytorch.callbacks import (
+    LearningRateFinder,
+    LearningRateMonitor,
+    RichProgressBar,
+)
 
 
 def auto_find_lr_and_fit(

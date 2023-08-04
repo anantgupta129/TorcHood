@@ -5,8 +5,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from pytorch_grad_cam import GradCAM
-from pytorch_grad_cam.utils.image import (deprocess_image, preprocess_image,
-                                          show_cam_on_image)
+from pytorch_grad_cam.utils.image import (
+    deprocess_image,
+    preprocess_image,
+    show_cam_on_image,
+)
 
 
 def plot_cam_on_image(

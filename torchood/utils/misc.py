@@ -39,8 +39,7 @@ def find_lr(
     dataloader: DataLoader,
     **kwargs,
 ):
-    """
-    Finds the learning rate for a given model using the LR Finder technique.
+    """Finds the learning rate for a given model using the LR Finder technique.
 
     Args:
         model (nn.Module): The model to find the learning rate for.

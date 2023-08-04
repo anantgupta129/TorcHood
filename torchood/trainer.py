@@ -88,8 +88,7 @@ class Trainer:
         )
 
     def plot_history(self):
-        """
-        Plot the training and test accuracy, loss, and epochs.
+        """Plot the training and test accuracy, loss, and epochs.
 
         This function plots the training and test accuracy, loss, and epochs of a neural network model. It takes no parameters and has no return value.
 

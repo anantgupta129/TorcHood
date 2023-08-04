@@ -17,6 +17,6 @@ setup(
         "torch-lr-finder",
         "torchinfo",
         "grad-cam",
-        "torchmetrics",
+        "torchmetrics==0.8.0",
     ],
 )

@@ -4,7 +4,6 @@
 
 <img src="./images/logo.jpg"  style="width:20%">
 
-
 [![python](https://img.shields.io/badge/-Python_3.8_%7C_3.9_%7C_3.10-blue?logo=python&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![pytorch](https://img.shields.io/badge/PyTorch_1.10+-ee4c2c?logo=pytorch&logoColor=white)](https://pytorch.org/get-started/locally/)
 [![lightning](https://img.shields.io/badge/-Lightning_1.9+-792ee5?logo=pytorchlightning&logoColor=white)](https://pytorchlightning.ai/)<br>
@@ -13,12 +12,12 @@
 [![license](https://img.shields.io/badge/License-MIT-green.svg?labelColor=gray)](https://github.com/ashleve/lightning-hydra-template#license)
 [![PRs](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/ashleve/lightning-hydra-template/pulls)
 
-__torchood: A User-Friendly Wrapper for Torch, Making Neural Network Training Effortless__ <br> 
+__torchood: A User-Friendly Wrapper for Torch, Making Neural Network Training Effortless__ <br>
 `Jumpstart your deep learning endeavors and rapidly prototype custom projects with torchood 🚀⚡🔥`<br>
 
 </div>
 
-## Project Structure 
+## Project Structure
 
 ```bash
 ├───torchood
@@ -61,41 +60,43 @@ conda activate myenv
 ## ⚡ Features
 
 - __LR finder__
-    ```bash
-    from torch.nn import CrossEntropyLoss
-    from torchood.utils.misc import find_lr
 
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+  ```bash
+  from torch.nn import CrossEntropyLoss
+  from torchood.utils.misc import find_lr
 
-    kwargs = {"end_lr":10, "num_iter": 200, "step_mode":"exp"}
-    find_lr(model, device, optimizer, criterion=CrossEntropyLoss(), dataloader=train_loader, **kwargs)
-    ```
+  optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
 
-- __grad cam__ 
+  kwargs = {"end_lr":10, "num_iter": 200, "step_mode":"exp"}
+  find_lr(model, device, optimizer, criterion=CrossEntropyLoss(), dataloader=train_loader, **kwargs)
+  ```
 
-    ```bash
-    from torchood.utils.gradcam import plot_cam_on_image
+- __grad cam__
 
-    mean = (0.49139968, 0.48215841, 0.44653091)
-    std = (0.24703223, 0.24348513, 0.26158784)
-    plot_cam_on_image(model, [model.layer4[1]], imgs_list, {"mean": mean, "std": std})
-    ```
+  ```bash
+  from torchood.utils.gradcam import plot_cam_on_image
+
+  mean = (0.49139968, 0.48215841, 0.44653091)
+  std = (0.24703223, 0.24348513, 0.26158784)
+  plot_cam_on_image(model, [model.layer4[1]], imgs_list, {"mean": mean, "std": std})
+  ```
 
 - __Training & training History__
-    ```bash
-    from torchood.trainer import Trainer
-    trainer = Trainer(model, device, optimizer, scheduler)
-    for epoch in range(1, num_epochs + 1):
-        print(f"Epoch {epoch}")
-        trainer.train(train_loader)
-        trainer.evaluate(test_loader)
-    
-    trainer.plot_history()
-    ```
+
+  ```bash
+  from torchood.trainer import Trainer
+  trainer = Trainer(model, device, optimizer, scheduler)
+  for epoch in range(1, num_epochs + 1):
+      print(f"Epoch {epoch}")
+      trainer.train(train_loader)
+      trainer.evaluate(test_loader)
+
+  trainer.plot_history()
+  ```
 
 - Supports the CIFAR10 dataset as a sample. In the future, we plan to add support for additional    datasets.
-- Supports sample models
 
+- Supports sample models
 
 ## 🤝 Contributing
 

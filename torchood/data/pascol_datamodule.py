@@ -1,4 +1,4 @@
-from typing import Optional, Any
+from typing import Any, Optional
 
 import albumentations as A
 from lightning.pytorch import LightningDataModule
@@ -23,8 +23,8 @@ class CIFAR10DataModule(LightningDataModule):
         # also ensures init params will be stored in ckpt
         self.save_hyperparameters(logger=False)
 
-        self.train_csv_path=config.DATASET + "/train.csv" 
-        self.test_csv_path=config.DATASET + "/test.csv"
+        self.train_csv_path = config.DATASET + "/train.csv"
+        self.test_csv_path = config.DATASET + "/test.csv"
 
         self.data_train: Optional[Dataset] = None
         self.data_val: Optional[Dataset] = None
@@ -32,12 +32,12 @@ class CIFAR10DataModule(LightningDataModule):
     @property
     def num_classes(self):
         return 20
-    
+
     @property
     def class_names(self):
         return self.hparams.config.PASCAL_CLASSES
 
-    def setup(self, stage: str=None) -> None:
+    def setup(self, stage: str = None) -> None:
         # load  only if not loaded already
         if not self.data_train and not self.data_val:
             IMAGE_SIZE = self.hparams.config.IMAGE_SIZE

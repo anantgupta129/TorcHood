@@ -1,7 +1,7 @@
 from collections import Counter
-import torch
-import numpy as np
 
+import numpy as np
+import torch
 
 
 def iou_width_height(boxes1, boxes2):
@@ -15,10 +15,9 @@ def iou_width_height(boxes1, boxes2):
     intersection = torch.min(boxes1[..., 0], boxes2[..., 0]) * torch.min(
         boxes1[..., 1], boxes2[..., 1]
     )
-    union = (
-        boxes1[..., 0] * boxes1[..., 1] + boxes2[..., 0] * boxes2[..., 1] - intersection
-    )
+    union = boxes1[..., 0] * boxes1[..., 1] + boxes2[..., 0] * boxes2[..., 1] - intersection
     return intersection / union
+
 
 def intersection_over_union(boxes_preds, boxes_labels, box_format="midpoint"):
     """
@@ -114,10 +113,9 @@ def non_max_suppression(bboxes, iou_threshold, threshold, box_format="corners"):
 
 
 def cells_to_bboxes(predictions, anchors, S, is_preds=True):
-    """
-    Scales the predictions coming from the model to
-    be relative to the entire image such that they for example later
-    can be plotted or.
+    """Scales the predictions coming from the model to be relative to the entire image such that
+    they for example later can be plotted or.
+
     INPUT:
     predictions: tensor of size (N, 3, S, S, num_classes+5)
     anchors: the anchors used for the predictions
@@ -141,15 +139,14 @@ def cells_to_bboxes(predictions, anchors, S, is_preds=True):
         best_class = predictions[..., 5:6]
 
     cell_indices = (
-        torch.arange(S)
-        .repeat(predictions.shape[0], 3, S, 1)
-        .unsqueeze(-1)
-        .to(predictions.device)
+        torch.arange(S).repeat(predictions.shape[0], 3, S, 1).unsqueeze(-1).to(predictions.device)
     )
     x = 1 / S * (box_predictions[..., 0:1] + cell_indices)
     y = 1 / S * (box_predictions[..., 1:2] + cell_indices.permute(0, 1, 3, 2, 4))
     w_h = 1 / S * box_predictions[..., 2:4]
-    converted_bboxes = torch.cat((best_class, scores, x, y, w_h), dim=-1).reshape(BATCH_SIZE, num_anchors * S * S, 6)
+    converted_bboxes = torch.cat((best_class, scores, x, y, w_h), dim=-1).reshape(
+        BATCH_SIZE, num_anchors * S * S, 6
+    )
     return converted_bboxes.tolist()
 
 
@@ -178,16 +175,12 @@ def get_evaluation_bboxes(
         for i in range(3):
             S = predictions[i].shape[2]
             anchor = torch.tensor([*anchors[i]]).to(device) * S
-            boxes_scale_i = cells_to_bboxes(
-                predictions[i], anchor, S=S, is_preds=True
-            )
+            boxes_scale_i = cells_to_bboxes(predictions[i], anchor, S=S, is_preds=True)
             for idx, (box) in enumerate(boxes_scale_i):
                 bboxes[idx] += box
 
         # we just want one bbox for each label, not one for each scale
-        true_bboxes = cells_to_bboxes(
-            labels[2], anchor, S=S, is_preds=False
-        )
+        true_bboxes = cells_to_bboxes(labels[2], anchor, S=S, is_preds=False)
 
         for idx in range(batch_size):
             nms_boxes = non_max_suppression(
@@ -208,7 +201,6 @@ def get_evaluation_bboxes(
 
     model.train()
     return all_pred_boxes, all_true_boxes
-
 
 
 def mean_average_precision(
@@ -268,8 +260,8 @@ def mean_average_precision(
 
         # sort by box probabilities which is index 2
         detections.sort(key=lambda x: x[2], reverse=True)
-        TP = torch.zeros((len(detections)))
-        FP = torch.zeros((len(detections)))
+        TP = torch.zeros(len(detections))
+        FP = torch.zeros(len(detections))
         total_true_bboxes = len(ground_truths)
 
         # If none exists for this class then we can safely skip
@@ -279,9 +271,7 @@ def mean_average_precision(
         for detection_idx, detection in enumerate(detections):
             # Only take out the ground_truths that have the same
             # training idx as detection
-            ground_truth_img = [
-                bbox for bbox in ground_truths if bbox[0] == detection[0]
-            ]
+            ground_truth_img = [bbox for bbox in ground_truths if bbox[0] == detection[0]]
 
             num_gts = len(ground_truth_img)
             best_iou = 0
@@ -322,13 +312,13 @@ def mean_average_precision(
     return sum(average_precisions) / len(average_precisions)
 
 
-
 def clip_coords(boxes, img_shape):
     # Clip bounding xyxy bounding boxes to image shape (height, width)
     boxes[:, 0].clamp_(0, img_shape[1])  # x1
     boxes[:, 1].clamp_(0, img_shape[0])  # y1
     boxes[:, 2].clamp_(0, img_shape[1])  # x2
     boxes[:, 3].clamp_(0, img_shape[0])  # y2
+
 
 def xywhn2xyxy(x, w=640, h=640, padw=0, padh=0):
     # Convert nx4 boxes from [x, y, w, h] normalized to [x1, y1, x2, y2] where xy1=top-left, xy2=bottom-right
@@ -347,6 +337,7 @@ def xyn2xy(x, w=640, h=640, padw=0, padh=0):
     y[..., 1] = h * x[..., 1] + padh  # top left y
     return y
 
+
 def xyxy2xywhn(x, w=640, h=640, clip=False, eps=0.0):
     # Convert nx4 boxes from [x1, y1, x2, y2] to [x, y, w, h] normalized where xy1=top-left, xy2=bottom-right
     if clip:
@@ -358,6 +349,7 @@ def xyxy2xywhn(x, w=640, h=640, clip=False, eps=0.0):
     y[..., 3] = (x[..., 3] - x[..., 1]) / h  # height
     return y
 
+
 def clip_boxes(boxes, shape):
     # Clip boxes (xyxy) to image shape (height, width)
     if isinstance(boxes, torch.Tensor):  # faster individually
@@ -368,4 +360,3 @@ def clip_boxes(boxes, shape):
     else:  # np.array (faster grouped)
         boxes[..., [0, 2]] = boxes[..., [0, 2]].clip(0, shape[1])  # x1, x2
         boxes[..., [1, 3]] = boxes[..., [1, 3]].clip(0, shape[0])  # y1, y2
-        

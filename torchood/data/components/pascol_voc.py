@@ -1,21 +1,18 @@
-"""
-Creates a Pytorch dataset to load the Pascal VOC
-"""
+"""Creates a Pytorch dataset to load the Pascal VOC."""
+
+import os
+import random
 
 import numpy as np
-import os
 import pandas as pd
 import torch
-from utils.box_utils import xywhn2xyxy, xyxy2xywhn
-import random 
-
 from PIL import Image, ImageFile
-from torch.utils.data import Dataset, DataLoader
-from utils.box_utils import (
-    iou_width_height as iou,
-)
+from torch.utils.data import DataLoader, Dataset
+from utils.box_utils import iou_width_height as iou
+from utils.box_utils import xywhn2xyxy, xyxy2xywhn
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
+
 
 class YOLODataset(Dataset):
     def __init__(
@@ -28,7 +25,7 @@ class YOLODataset(Dataset):
         S=[13, 26, 52],
         C=20,
         transform=None,
-        mosaic_prob: float=0.5
+        mosaic_prob: float = 0.5,
     ):
         self.annotations = pd.read_csv(csv_file)
         self.img_dir = img_dir
@@ -46,30 +43,45 @@ class YOLODataset(Dataset):
 
     def __len__(self):
         return len(self.annotations)
-    
+
     def load_mosaic(self, index):
         # YOLOv5 4-mosaic loader. Loads 1 image + 3 random images into a 4-image mosaic
         labels4 = []
         s = self.image_size
-        yc, xc = (int(random.uniform(x, 2 * s - x)) for x in self.mosaic_border)  # mosaic center x, y
+        yc, xc = (
+            int(random.uniform(x, 2 * s - x)) for x in self.mosaic_border
+        )  # mosaic center x, y
         indices = [index] + random.choices(range(len(self)), k=3)  # 3 additional image indices
         random.shuffle(indices)
         for i, index in enumerate(indices):
             # Load image
             label_path = os.path.join(self.label_dir, self.annotations.iloc[index, 1])
-            bboxes = np.roll(np.loadtxt(fname=label_path, delimiter=" ", ndmin=2), 4, axis=1).tolist()
+            bboxes = np.roll(
+                np.loadtxt(fname=label_path, delimiter=" ", ndmin=2), 4, axis=1
+            ).tolist()
             img_path = os.path.join(self.img_dir, self.annotations.iloc[index, 0])
             img = np.array(Image.open(img_path).convert("RGB"))
-            
 
             h, w = img.shape[0], img.shape[1]
             labels = np.array(bboxes)
 
             # place img in img4
             if i == 0:  # top left
-                img4 = np.full((s * 2, s * 2, img.shape[2]), 114, dtype=np.uint8)  # base image with 4 tiles
-                x1a, y1a, x2a, y2a = max(xc - w, 0), max(yc - h, 0), xc, yc  # xmin, ymin, xmax, ymax (large image)
-                x1b, y1b, x2b, y2b = w - (x2a - x1a), h - (y2a - y1a), w, h  # xmin, ymin, xmax, ymax (small image)
+                img4 = np.full(
+                    (s * 2, s * 2, img.shape[2]), 114, dtype=np.uint8
+                )  # base image with 4 tiles
+                x1a, y1a, x2a, y2a = (
+                    max(xc - w, 0),
+                    max(yc - h, 0),
+                    xc,
+                    yc,
+                )  # xmin, ymin, xmax, ymax (large image)
+                x1b, y1b, x2b, y2b = (
+                    w - (x2a - x1a),
+                    h - (y2a - y1a),
+                    w,
+                    h,
+                )  # xmin, ymin, xmax, ymax (small image)
             elif i == 1:  # top right
                 x1a, y1a, x2a, y2a = xc, max(yc - h, 0), min(xc + w, s * 2), yc
                 x1b, y1b, x2b, y2b = 0, h - (y2a - y1a), min(w, x2a - x1a), h
@@ -86,7 +98,9 @@ class YOLODataset(Dataset):
 
             # Labels
             if labels.size:
-                labels[:, :-1] = xywhn2xyxy(labels[:, :-1], w, h, padw, padh)  # normalized xywh to pixel xyxy format
+                labels[:, :-1] = xywhn2xyxy(
+                    labels[:, :-1], w, h, padw, padh
+                )  # normalized xywh to pixel xyxy format
             labels4.append(labels)
 
         # Concat/clip labels
@@ -98,17 +112,19 @@ class YOLODataset(Dataset):
         labels4[:, :-1] = np.clip(labels4[:, :-1], 0, 1)
         labels4 = labels4[labels4[:, 2] > 0]
         labels4 = labels4[labels4[:, 3] > 0]
-        return img4, labels4 
+        return img4, labels4
 
     def __getitem__(self, index):
         if random.random() > self.mosaic_prob:
             image, bboxes = self.load_mosaic(index)
         else:
             label_path = os.path.join(self.label_dir, self.annotations.iloc[index, 1])
-            bboxes = np.roll(np.loadtxt(fname=label_path, delimiter=" ", ndmin=2), 4, axis=1).tolist()
+            bboxes = np.roll(
+                np.loadtxt(fname=label_path, delimiter=" ", ndmin=2), 4, axis=1
+            ).tolist()
             img_path = os.path.join(self.img_dir, self.annotations.iloc[index, 0])
             image = np.array(Image.open(img_path).convert("RGB"))
-            
+
         if self.transform:
             augmentations = self.transform(image=image, bboxes=bboxes)
             image = augmentations["image"]
@@ -134,9 +150,7 @@ class YOLODataset(Dataset):
                         width * S,
                         height * S,
                     )  # can be greater than 1 since it's relative to cell
-                    box_coordinates = torch.tensor(
-                        [x_cell, y_cell, width_cell, height_cell]
-                    )
+                    box_coordinates = torch.tensor([x_cell, y_cell, width_cell, height_cell])
                     targets[scale_idx][anchor_on_scale, i, j, 1:5] = box_coordinates
                     targets[scale_idx][anchor_on_scale, i, j, 5] = int(class_label)
                     has_anchor[scale_idx] = True

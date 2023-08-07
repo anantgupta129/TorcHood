@@ -1,15 +1,13 @@
-"""
-Implementation of YOLOv3 architecture
-"""
-from typing import List, Any
+"""Implementation of YOLOv3 architecture."""
+from typing import Any, List
 
 import torch
 import torch.nn as nn
 
-""" 
+"""
 Information about architecture config:
-Tuple is structured by (filters, kernel_size, stride) 
-Every conv is a same convolution. 
+Tuple is structured by (filters, kernel_size, stride)
+Every conv is a same convolution.
 List is structured by "B" indicating a residual block followed by the number of repeats
 "S" is for scale prediction block and computing the yolo loss
 "U" is for upsampling the feature map and concatenating with a previous layer
@@ -87,9 +85,7 @@ class ScalePrediction(nn.Module):
         super().__init__()
         self.pred = nn.Sequential(
             CNNBlock(in_channels, 2 * in_channels, kernel_size=3, padding=1),
-            CNNBlock(
-                2 * in_channels, (num_classes + 5) * 3, bn_act=False, kernel_size=1
-            ),
+            CNNBlock(2 * in_channels, (num_classes + 5) * 3, bn_act=False, kernel_size=1),
         )
         self.num_classes = num_classes
 
@@ -108,7 +104,6 @@ class YOLOv3(nn.Module):
         self.num_classes = num_classes
         self.in_channels = in_channels
         self.layers = self._create_conv_layers()
-        
 
     def forward(self, x):
         outputs = []  # for each scale
@@ -149,7 +144,12 @@ class YOLOv3(nn.Module):
 
             elif isinstance(module, list):
                 num_repeats = module[1]
-                layers.append(ResidualBlock(in_channels, num_repeats=num_repeats,))
+                layers.append(
+                    ResidualBlock(
+                        in_channels,
+                        num_repeats=num_repeats,
+                    )
+                )
 
             elif isinstance(module, str):
                 if module == "S":
@@ -161,7 +161,9 @@ class YOLOv3(nn.Module):
                     in_channels = in_channels // 2
 
                 elif module == "U":
-                    layers.append(nn.Upsample(scale_factor=2),)
+                    layers.append(
+                        nn.Upsample(scale_factor=2),
+                    )
                     in_channels = in_channels * 3
 
         return layers
@@ -173,7 +175,7 @@ if __name__ == "__main__":
     model = YOLOv3(load_config=config, num_classes=num_classes)
     x = torch.randn((2, 3, IMAGE_SIZE, IMAGE_SIZE))
     out = model(x)
-    assert out[0].shape == (2, 3, IMAGE_SIZE//32, IMAGE_SIZE//32, num_classes + 5)
-    assert out[1].shape == (2, 3, IMAGE_SIZE//16, IMAGE_SIZE//16, num_classes + 5)
-    assert out[2].shape == (2, 3, IMAGE_SIZE//8, IMAGE_SIZE//8, num_classes + 5)
+    assert out[0].shape == (2, 3, IMAGE_SIZE // 32, IMAGE_SIZE // 32, num_classes + 5)
+    assert out[1].shape == (2, 3, IMAGE_SIZE // 16, IMAGE_SIZE // 16, num_classes + 5)
+    assert out[2].shape == (2, 3, IMAGE_SIZE // 8, IMAGE_SIZE // 8, num_classes + 5)
     print("Success!")

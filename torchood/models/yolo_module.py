@@ -27,17 +27,15 @@ class YOLOv3LitModule(LightningModule):
     def __init__(self, learning_rate: float, config: Any, in_channels: int = 3) -> None:
         super().__init__()
 
-        self.scaled_anchors = (
-            torch.tensor(config.ANCHORS)
-            * torch.tensor(config.S).unsqueeze(1).unsqueeze(1).repeat(1, 3, 2)
-        )
         self.threshold = config.CONF_THRESHOLD
         self.NMS_IOU_THRESH = config.NMS_IOU_THRESH
         self.ANCHORS = config.ANCHORS
+        self.S = config.S
         self.CONF_THRESHOLD = config.CONF_THRESHOLD
         self.MAP_IOU_THRESH = config.MAP_IOU_THRESH
         self.NUM_CLASSES = config.NUM_CLASSES
         self.WEIGHT_DECAY = config.WEIGHT_DECAY
+        self.scaled_anchors = None
 
         self.net: torch.nn.Module = YOLOv3(num_classes=self.NUM_CLASSES, in_channels=in_channels)
 
@@ -70,6 +68,12 @@ class YOLOv3LitModule(LightningModule):
         return [optimizer], [lr_scheduler]
 
     def _step(self, batch: Any, metric: Union[Metric, Any]) -> torch.Tensor:
+        if self.scaled_anchors is None:
+            self.scaled_anchors = (
+                torch.tensor(self.ANCHORS)
+                * torch.tensor(self.S).unsqueeze(1).unsqueeze(1).repeat(1, 3, 2)
+            ).to(self.device)
+            
         x, y = batch
         y0, y1, y2 = y
 

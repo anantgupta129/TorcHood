@@ -3,9 +3,9 @@ from typing import Any, Optional, Tuple
 import torch
 from lightning.pytorch import LightningModule
 from lightning.pytorch.utilities.types import STEP_OUTPUT
-from utils.box_utils import get_evaluation_bboxes, mean_average_precision
-from utils.yolo_loss import YoloLoss
 
+from ..utils.box_utils import get_evaluation_bboxes, mean_average_precision
+from ..utils.yolo_loss import YoloLoss
 from .components.yolov3 import YOLOv3
 
 

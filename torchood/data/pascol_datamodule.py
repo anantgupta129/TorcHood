@@ -12,8 +12,6 @@ class PascolVOCDataModule(LightningDataModule):
     def __init__(
         self,
         DATASET: str,
-        IMG_DIR: str,
-        LABEL_DIR: str,
         ANCHORS: List[List],
         class_names: List[str],
         IMAGE_SIZE: int = 416,
@@ -31,6 +29,8 @@ class PascolVOCDataModule(LightningDataModule):
 
         self.train_csv_path = DATASET + "/train.csv"
         self.test_csv_path = DATASET + "/test.csv"
+        self.IMG_DIR = DATASET + "/images/"
+        self.LABEL_DIR = DATASET + "/labels/"
 
         self.data_train: Optional[Dataset] = None
         self.data_val: Optional[Dataset] = None
@@ -53,16 +53,16 @@ class PascolVOCDataModule(LightningDataModule):
                 self.train_csv_path,
                 transform=self.train_transforms,
                 S=[IMAGE_SIZE // 32, IMAGE_SIZE // 16, IMAGE_SIZE // 8],
-                img_dir=self.hparams.IMG_DIR,
-                label_dir=self.hparams.LABEL_DIR,
+                img_dir=self.IMG_DIR,
+                label_dir=self.LABEL_DIR,
                 anchors=self.hparams.ANCHORS,
             )
             self.data_val = YOLODataset(
                 self.test_csv_path,
                 transform=self.test_transforms,
                 S=[IMAGE_SIZE // 32, IMAGE_SIZE // 16, IMAGE_SIZE // 8],
-                img_dir=self.hparams.IMG_DIR,
-                label_dir=self.hparams.LABEL_DIR,
+                img_dir=self.IMG_DIR,
+                label_dir=self.LABEL_DIR,
                 anchors=self.hparams.ANCHORS,
             )
 

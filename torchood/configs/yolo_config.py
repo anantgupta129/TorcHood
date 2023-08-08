@@ -108,8 +108,6 @@ PASCAL_CLASSES = [
 
 dataloader_config = {
     "DATASET": DATASET,
-    "IMG_DIR": DATASET + "/images/",
-    "LABEL_DIR": DATASET + "/labels/",
     "IMAGE_SIZE": IMAGE_SIZE,
     "batch_size": 32,
     "pin_memory": True,

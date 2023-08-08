@@ -32,10 +32,10 @@ class YOLOv3LitModule(LightningModule):
             * torch.tensor(config.S).unsqueeze(1).unsqueeze(1).repeat(1, 3, 2)
         ).to(config.DEVICE)
         self.threshold = config.CONF_THRESHOLD
-        self.iou_threshold = config.NMS_IOU_THRESH
+        self.NMS_IOU_THRESH = config.NMS_IOU_THRESH
         self.anchors = config.ANCHORS
         self.threshold = config.CONF_THRESHOLD
-        self.iou_threshold = config.MAP_IOU_THRESH
+        self.MAP_IOU_THRESH = config.MAP_IOU_THRESH
         self.num_classes = config.NUM_CLASSES
         self.WEIGHT_DECAY = config.WEIGHT_DECAY
 

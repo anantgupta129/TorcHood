@@ -33,13 +33,13 @@ class YOLOv3LitModule(LightningModule):
         ).to(config.DEVICE)
         self.threshold = config.CONF_THRESHOLD
         self.NMS_IOU_THRESH = config.NMS_IOU_THRESH
-        self.anchors = config.ANCHORS
-        self.threshold = config.CONF_THRESHOLD
+        self.ANCHORS = config.ANCHORS
+        self.CONF_THRESHOLD = config.CONF_THRESHOLD
         self.MAP_IOU_THRESH = config.MAP_IOU_THRESH
-        self.num_classes = config.NUM_CLASSES
+        self.NUM_CLASSES = config.NUM_CLASSES
         self.WEIGHT_DECAY = config.WEIGHT_DECAY
 
-        self.net: torch.nn.Module = YOLOv3(num_classes=self.num_classes, in_channels=in_channels)
+        self.net: torch.nn.Module = YOLOv3(num_classes=self.NUM_CLASSES, in_channels=in_channels)
 
         self.learning_rate = learning_rate
 

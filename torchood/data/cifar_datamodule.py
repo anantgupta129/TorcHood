@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 
 import albumentations as A
 from lightning.pytorch import LightningDataModule
@@ -15,7 +15,7 @@ class CIFAR10DataModule(LightningDataModule):
         batch_size: int = 512,
         num_workers: int = 0,
         pin_memory: bool = False,
-        train_augments: A.Compose | None = None,
+        train_augments: Union[A.Compose, None] = None,
     ):
         super().__init__()
 

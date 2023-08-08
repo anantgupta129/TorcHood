@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union
 
 import albumentations as A
 from lightning.pytorch import LightningDataModule
@@ -20,8 +20,8 @@ class PascolVOCDataModule(LightningDataModule):
         batch_size: int = 512,
         num_workers: int = 0,
         pin_memory: bool = False,
-        train_transforms: A.Compose | None = None,
-        test_transforms: A.Compose | None = None,
+        train_transforms: Union[A.Compose, None] = None,
+        test_transforms: Union[A.Compose, None] = None,
     ):
         super().__init__()
 

@@ -68,15 +68,15 @@ class YOLOv3LitModule(LightningModule):
         return [optimizer], [lr_scheduler]
 
     def _step(self, batch: Any, metric: Union[Metric, Any]) -> torch.Tensor:
+        
+        x, y = batch
+        y0, y1, y2 = y
         if self.scaled_anchors is None:
             self.scaled_anchors = (
                 torch.tensor(self.ANCHORS)
                 * torch.tensor(self.S).unsqueeze(1).unsqueeze(1).repeat(1, 3, 2)
-            ).to(self.device)
+            ).to(y0.device)
             
-        x, y = batch
-        y0, y1, y2 = y
-
         logits = self.forward(x)
         loss = (
             self.loss_fn(logits[0], y0, self.scaled_anchors[0])

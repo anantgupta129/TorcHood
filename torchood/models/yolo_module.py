@@ -1,4 +1,4 @@
-from typing import Any, Optional, Tuple
+from typing import Any, Optional, Union
 
 import torch
 from lightning.pytorch import LightningModule
@@ -69,7 +69,7 @@ class YOLOv3LitModule(LightningModule):
         lr_scheduler = {"scheduler": scheduler, "interval": "step"}
         return [optimizer], [lr_scheduler]
 
-    def _step(self, batch: Any, metric: Metric | Any) -> torch.Tensor:
+    def _step(self, batch: Any, metric: Union[Metric, Any]) -> torch.Tensor:
         x, y = batch
         y0, y1, y2 = y
 

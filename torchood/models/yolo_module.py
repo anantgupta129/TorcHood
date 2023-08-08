@@ -103,7 +103,6 @@ class YOLOv3LitModule(LightningModule):
         loss = self._step(batch, self.train_metric)
         # update and log metrics
         mean_loss = sum(self.train_metric.losses) / len(self.train_metric.losses)
-
         self.log("train/loss", mean_loss, prog_bar=True)
 
         return loss
@@ -126,10 +125,8 @@ class YOLOv3LitModule(LightningModule):
     def validation_step(self, batch: Any, batch_idx: int) -> STEP_OUTPUT:
         loss = self._step(batch, self.val_metric)
         # update and log metrics
-        self.val_losses.append(loss)
-        mean_loss = sum(self.val_losses) / len(self.val_losses)
-
-        self.log("train/loss", mean_loss, prog_bar=True)
+        mean_loss = sum(self.val_metric.losses) / len(self.val_metric.losses)
+        self.log("val/loss", mean_loss, prog_bar=True)
 
         return loss
 
@@ -146,7 +143,7 @@ class YOLOv3LitModule(LightningModule):
         )
         self.log(
             "val/obj_acc",
-            (self.val_metric.correct_obj / (self.train_metric.tot_obj + 1e-16)) * 100,
+            (self.val_metric.correct_obj / (self.val_metric.tot_obj + 1e-16)) * 100,
             prog_bar=True,
         )
 

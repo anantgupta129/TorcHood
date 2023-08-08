@@ -8,8 +8,9 @@ import pandas as pd
 import torch
 from PIL import Image, ImageFile
 from torch.utils.data import DataLoader, Dataset
-from utils.box_utils import iou_width_height as iou
-from utils.box_utils import xywhn2xyxy, xyxy2xywhn
+
+from ...utils.box_utils import iou_width_height as iou
+from ...utils.box_utils import xywhn2xyxy, xyxy2xywhn
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 

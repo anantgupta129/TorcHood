@@ -6,3 +6,4 @@ torch-lr-finder
 torchinfo
 grad-cam
 torchmetrics==0.8.0
+pandas

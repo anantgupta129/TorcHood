@@ -5,7 +5,7 @@ from albumentations.pytorch import ToTensorV2
 
 # from utils import seed_everything
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+# DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 # seed_everything()  # If you want deterministic behavior
 
 DATASET = "PASCAL_VOC"

@@ -30,7 +30,7 @@ class YOLOv3LitModule(LightningModule):
         self.scaled_anchors = (
             torch.tensor(config.ANCHORS)
             * torch.tensor(config.S).unsqueeze(1).unsqueeze(1).repeat(1, 3, 2)
-        ).to(config.DEVICE)
+        )
         self.threshold = config.CONF_THRESHOLD
         self.NMS_IOU_THRESH = config.NMS_IOU_THRESH
         self.ANCHORS = config.ANCHORS

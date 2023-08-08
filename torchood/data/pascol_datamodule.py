@@ -8,7 +8,7 @@ from torchvision import datasets
 from .components.pascol_voc import YOLODataset
 
 
-class CIFAR10DataModule(LightningDataModule):
+class PascolVOCDataModule(LightningDataModule):
     def __init__(
         self,
         config: Any,

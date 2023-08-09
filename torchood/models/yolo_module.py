@@ -115,14 +115,17 @@ class YOLOv3LitModule(LightningModule):
         self.log(
             "train/class_acc",
             (self.train_metric.correct_class / (self.train_metric.tot_class_preds + 1e-16)) * 100,
+            prog_bar=True,
         )
         self.log(
             "train/no_obj_acc",
             (self.train_metric.correct_noobj / (self.train_metric.tot_noobj + 1e-16)) * 100,
+            prog_bar=True,
         )
         self.log(
             "train/obj_acc",
             (self.train_metric.correct_obj / (self.train_metric.tot_obj + 1e-16)) * 100,
+            prog_bar=True,
         )
         self.train_metric.reset()
 

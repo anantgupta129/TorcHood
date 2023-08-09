@@ -1,10 +1,16 @@
-from typing import Any, Optional, Union
+from typing import Any, List, Optional, Union
 
 import torch
 from lightning.pytorch import LightningModule
 from lightning.pytorch.utilities.types import STEP_OUTPUT
 
-from ..utils.box_utils import get_evaluation_bboxes, mean_average_precision
+from ..utils.box_utils import (
+    cells_to_bboxes,
+    get_evaluation_bboxes,
+    mean_average_precision,
+    non_max_suppression,
+)
+from ..utils.plotting import plot_couple_examples
 from ..utils.yolo_loss import YoloLoss
 from .components.yolov3 import YOLOv3
 
@@ -18,13 +24,17 @@ class Metric:
         self.tot_class_preds, self.correct_class = 0, 0
         self.tot_noobj, self.correct_noobj = 0, 0
         self.tot_obj, self.correct_obj = 0, 0
+        self.all_pred_boxes = []
+        self.all_true_boxes = []
 
     def reset(self) -> None:
         self._load()
 
 
 class YOLOv3LitModule(LightningModule):
-    def __init__(self, learning_rate: float, config: Any, in_channels: int = 3) -> None:
+    def __init__(
+        self, learning_rate: float, config: Any, class_labels: List[str], in_channels: int = 3
+    ) -> None:
         super().__init__()
 
         self.threshold = config.CONF_THRESHOLD
@@ -36,6 +46,7 @@ class YOLOv3LitModule(LightningModule):
         self.NUM_CLASSES = config.NUM_CLASSES
         self.WEIGHT_DECAY = config.WEIGHT_DECAY
         self.scaled_anchors = None
+        self.class_labels = class_labels
 
         self.net: torch.nn.Module = YOLOv3(num_classes=self.NUM_CLASSES, in_channels=in_channels)
 
@@ -68,7 +79,6 @@ class YOLOv3LitModule(LightningModule):
         return [optimizer], [lr_scheduler]
 
     def _step(self, batch: Any, metric: Union[Metric, Any]) -> torch.Tensor:
-        
         x, y = batch
         y0, y1, y2 = y
         if self.scaled_anchors is None:
@@ -76,7 +86,7 @@ class YOLOv3LitModule(LightningModule):
                 torch.tensor(self.ANCHORS)
                 * torch.tensor(self.S).unsqueeze(1).unsqueeze(1).repeat(1, 3, 2)
             ).to(y0.device)
-            
+
         logits = self.forward(x)
         loss = (
             self.loss_fn(logits[0], y0, self.scaled_anchors[0])
@@ -101,10 +111,10 @@ class YOLOv3LitModule(LightningModule):
             metric.correct_noobj += torch.sum(obj_preds[noobj] == y[i][..., 0][noobj])
             metric.tot_noobj += torch.sum(noobj)
 
-        return loss
+        return loss, logits, y
 
     def training_step(self, batch: Any, batch_idx: int) -> STEP_OUTPUT:
-        loss = self._step(batch, self.train_metric)
+        loss, _, _ = self._step(batch, self.train_metric)
         # update and log metrics
         mean_loss = sum(self.train_metric.losses) / len(self.train_metric.losses)
         self.log("train/loss", mean_loss, prog_bar=True)
@@ -130,10 +140,37 @@ class YOLOv3LitModule(LightningModule):
         self.train_metric.reset()
 
     def validation_step(self, batch: Any, batch_idx: int) -> STEP_OUTPUT:
-        loss = self._step(batch, self.val_metric)
+        loss, logits, labels = self._step(batch, self.val_metric)
         # update and log metrics
         mean_loss = sum(self.val_metric.losses) / len(self.val_metric.losses)
         self.log("val/loss", mean_loss, prog_bar=True)
+
+        batch_size = batch.shape[0]
+        bboxes = [[] for _ in range(batch_size)]
+        for i in range(3):
+            S = logits[i].shape[2]
+            anchor = torch.tensor([*self.ANCHORS[i]]).to(self.device) * S
+            boxes_scale_i = cells_to_bboxes(logits[i], anchor, S=S, is_preds=True)
+            for idx, (box) in enumerate(boxes_scale_i):
+                bboxes[idx] += box
+
+        # we just want one bbox for each label, not one for each scale
+        true_bboxes = cells_to_bboxes(labels[2], anchor, S=S, is_preds=False)
+
+        for idx in range(batch_size):
+            nms_boxes = non_max_suppression(
+                bboxes[idx],
+                iou_threshold=self.NMS_IOU_THRESH,
+                threshold=self.CONF_THRESHOLD,
+                box_format="midpoint",
+            )
+
+            for nms_box in nms_boxes:
+                self.val_metric.all_pred_boxes.append([batch_idx] + nms_box)
+
+            for box in true_bboxes[idx]:
+                if box[1] > self.CONF_THRESHOLD:
+                    self.val_metric.all_true_boxes.append([batch_idx] + box)
 
         return loss
 
@@ -154,16 +191,16 @@ class YOLOv3LitModule(LightningModule):
             prog_bar=True,
         )
 
-        pred_boxes, true_boxes = get_evaluation_bboxes(
-            self.trainer.val_dataloaders,
-            self,
-            iou_threshold=self.NMS_IOU_THRESH,
-            anchors=self.ANCHORS,
-            threshold=self.CONF_THRESHOLD,
-        )
+        # pred_boxes, true_boxes = get_evaluation_bboxes(
+        #     self.trainer.val_dataloaders,
+        #     self,
+        #     iou_threshold=self.NMS_IOU_THRESH,
+        #     anchors=self.ANCHORS,
+        #     threshold=self.CONF_THRESHOLD,
+        # )
         mapval = mean_average_precision(
-            pred_boxes,
-            true_boxes,
+            self.val_metric.all_pred_boxes,
+            self.val_metric.all_true_boxes,
             iou_threshold=self.MAP_IOU_THRESH,
             box_format="midpoint",
             num_classes=self.NUM_CLASSES,
@@ -171,3 +208,15 @@ class YOLOv3LitModule(LightningModule):
 
         self.log("val/MAP", mapval, prog_bar=True)
         self.val_metric.reset()
+
+        if self.current_epoch % 3 == 0:
+            plotted_image = plot_couple_examples(
+                self, self.trainer.val_dataloaders, 0.6, 0.5, self.scaled_anchor, self.class_labels
+            )
+
+            for idx, im in enumerate(plotted_image):
+                self.logger.experiment.add_image(
+                    "sample_prediction",
+                    torch.tensor(im).unsqueeze(0),
+                    f"{self.current_epoch}{idx}",
+                )

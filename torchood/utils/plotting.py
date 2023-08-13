@@ -1,4 +1,7 @@
+from typing import Any, List
 import io
+import random
+import cv2
 from random import randint
 from typing import Any
 
@@ -10,7 +13,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-from .box_utils import cells_to_bboxes, non_max_suppression
+from ..models.components.yolo.utils import cells_to_bboxes, non_max_suppression
 
 
 def plot_sampledata(loader: DataLoader):
@@ -91,59 +94,48 @@ def plot_misclassified(
         return imgs_list
 
 
-def plot_image(image, boxes, class_labels):
+def draw_predictions(image: np.ndarray, boxes: List[List], class_labels: List[str]) -> np.ndarray:
     """Plots predicted bounding boxes on the image."""
-    cmap = plt.get_cmap("tab20b")
-    colors = [cmap(i) for i in np.linspace(0, 1, len(class_labels))]
+
+    colors = [[random.randint(0, 255) for _ in range(3)] for name in class_labels]
+
     im = np.array(image)
     height, width, _ = im.shape
-
-    buffer = io.BytesIO()
-    # Create figure and axes
-    fig, ax = plt.subplots(1)
-    # Display the image
-    ax.imshow(im)
-
-    # box[0] is x midpoint, box[2] is width
-    # box[1] is y midpoint, box[3] is height
+    bbox_thick = int(0.6 * (height + width) / 600)
 
     # Create a Rectangle patch
     for box in boxes:
         assert len(box) == 6, "box should contain class pred, confidence, x, y, width, height"
         class_pred = box[0]
+        conf = box[1]
         box = box[2:]
         upper_left_x = box[0] - box[2] / 2
         upper_left_y = box[1] - box[3] / 2
-        rect = patches.Rectangle(
-            (upper_left_x * width, upper_left_y * height),
-            box[2] * width,
-            box[3] * height,
-            linewidth=2,
-            edgecolor=colors[int(class_pred)],
-            facecolor="none",
+
+        x1 = int(upper_left_x * width)
+        y1 = int(upper_left_y * height)
+
+        x2 = x1 + int(box[2] * width)
+        y2 = y1 + int(box[3] * height)
+
+        cv2.rectangle(
+            image, (x1, y1), (x2, y2), color=colors[int(class_pred)], thickness=bbox_thick
         )
-        # Add the patch to the Axes
-        ax.add_patch(rect)
-        plt.text(
-            upper_left_x * width,
-            upper_left_y * height,
-            s=class_labels[int(class_pred)],
-            color="white",
-            verticalalignment="top",
-            bbox={"color": colors[int(class_pred)], "pad": 0},
+        text = f"{class_labels[int(class_pred)]}: {conf:.2f}"
+        t_size = cv2.getTextSize(text, 0, 0.7, thickness=bbox_thick // 2)[0]
+        c3 = (x1 + t_size[0], y1 - t_size[1] - 3)
+
+        cv2.rectangle(image, (x1, y1), c3, colors[int(class_pred)], -1)
+        cv2.putText(
+            image,
+            text,
+            (x1, y1 - 2),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.7,
+            (0, 0, 0),
+            bbox_thick // 2,
+            lineType=cv2.LINE_AA,
         )
-
-    # Save the figure to the buffer in png format
-    fig.savefig(buffer, format="png")
-    # Seek back to the beginning of the buffer
-    buffer.seek(0)
-
-    # Read the buffer into a NumPy array
-    image = np.frombuffer(buffer.getvalue(), dtype=np.uint8)
-
-    # Reshape the image to match the dimensions of the figure
-    width, height, _ = fig.canvas.get_width_height()
-    image = image.reshape(height, width, 4)  # 4 channels (png)
 
     return image
 
@@ -171,7 +163,7 @@ def plot_couple_examples(model, loader, thresh, iou_thresh, anchors, class_label
             threshold=thresh,
             box_format="midpoint",
         )
-        image = plot_image(x[i].permute(1, 2, 0).detach().cpu(), nms_boxes, class_labels)
+        image = draw_predictions(x[i].permute(1, 2, 0).detach().cpu(), nms_boxes, class_labels)
         plotted_images.append(image)
 
     return plotted_images

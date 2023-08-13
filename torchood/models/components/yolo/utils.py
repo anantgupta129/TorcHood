@@ -2,7 +2,7 @@ from collections import Counter
 
 import numpy as np
 import torch
-
+from tqdm import tqdm
 
 def iou_width_height(boxes1, boxes2):
     """
@@ -156,7 +156,7 @@ def check_class_accuracy(model, loader, threshold):
     tot_noobj, correct_noobj = 0, 0
     tot_obj, correct_obj = 0, 0
 
-    for idx, (x, y) in enumerate(loader):
+    for idx, (x, y) in tqdm(enumerate(loader)):
         with torch.no_grad():
             out = model(x)
 
@@ -178,9 +178,9 @@ def check_class_accuracy(model, loader, threshold):
     class_accuracy = (correct_class/(tot_class_preds+1e-16))*100
     no_obj_accuracy = (correct_noobj/(tot_noobj+1e-16))*100
     obj_accuracy = (correct_obj/(tot_obj+1e-16))*100
-    # print(f"Class accuracy is: {(correct_class/(tot_class_preds+1e-16))*100:2f}%")
-    # print(f"No obj accuracy is: {(correct_noobj/(tot_noobj+1e-16))*100:2f}%")
-    # print(f"Obj accuracy is: {(correct_obj/(tot_obj+1e-16))*100:2f}%")
+    print(f"Class accuracy is: {class_accuracy:2f}%")
+    print(f"No obj accuracy is: {no_obj_accuracy:2f}%")
+    print(f"Obj accuracy is: {obj_accuracy:2f}%")
     model.train()
     return class_accuracy, no_obj_accuracy, obj_accuracy
 
@@ -199,7 +199,7 @@ def get_evaluation_bboxes(
     train_idx = 0
     all_pred_boxes = []
     all_true_boxes = []
-    for batch_idx, (x, labels) in enumerate(loader):
+    for batch_idx, (x, labels) in tqdm(enumerate(loader)):
         x = x.to(device)
 
         with torch.no_grad():

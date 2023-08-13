@@ -26,7 +26,7 @@ class YOLODataset(Dataset):
         S=[13, 26, 52],
         C=20,
         transform=None,
-        mosaic_prob: float = 0.5,
+        mosaic_prob: float = 0.8,
     ):
         self.annotations = pd.read_csv(csv_file)
         self.img_dir = img_dir

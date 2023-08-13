@@ -109,15 +109,15 @@ class YOLOv3LitModule(LightningModule):
         return loss
 
     def on_train_epoch_end(self) -> None:
+        self.train_loss = []
         current_epoch = self.current_epoch
-        if current_epoch > 0 and (current_epoch%5 == 0 or current_epoch == self.trainer.max_epochs):
-            class_accuracy, no_obj_accuracy, obj_accuracy = check_class_accuracy(self, self.train_dataloader, self.CONF_THRESHOLD)
+        if current_epoch > 0 and (current_epoch%3 == 0 or current_epoch == self.trainer.max_epochs):
+            class_accuracy, no_obj_accuracy, obj_accuracy = check_class_accuracy(self, self.train_dataloader(), self.CONF_THRESHOLD)
             
             self.log("train/class_acc", class_accuracy, prog_bar=True,sync_dist=True)
             self.log("train/no_obj_acc", no_obj_accuracy, prog_bar=True,sync_dist=True)
             self.log("train/obj_acc", obj_accuracy, prog_bar=True,sync_dist=True)
             
-        self.train_loss = []
         # self.train_metric.reset()
 
     def validation_step(self, batch: Any, batch_idx: int) -> STEP_OUTPUT:
@@ -130,16 +130,19 @@ class YOLOv3LitModule(LightningModule):
         return loss
 
     def on_validation_epoch_end(self) -> None:
+        self.val_loss = []
+        
         current_epoch = self.current_epoch
+        loader = self.val_dataloader()
         if current_epoch > 0 and (current_epoch%2 == 0 or current_epoch == self.trainer.max_epochs):
-            class_accuracy, no_obj_accuracy, obj_accuracy = check_class_accuracy(self, self.val_dataloader, self.CONF_THRESHOLD)
+            class_accuracy, no_obj_accuracy, obj_accuracy = check_class_accuracy(self, loader, self.CONF_THRESHOLD)
             
             self.log("val/class_acc", class_accuracy, prog_bar=True,sync_dist=True)
             self.log("val/no_obj_acc", no_obj_accuracy, prog_bar=True,sync_dist=True)
             self.log("val/obj_acc", obj_accuracy, prog_bar=True,sync_dist=True)
             
             plotted_image = plot_couple_examples(
-                self, self.val_dataloader, 0.6, 0.5, self.scaled_anchors, self.class_labels
+                self, loader, 0.6, 0.5, self.scaled_anchors, self.class_labels
             )
             for idx, im in enumerate(plotted_image):
                 self.logger.experiment.add_image(
@@ -151,7 +154,7 @@ class YOLOv3LitModule(LightningModule):
         #if current_epoch > 0 and (current_epoch%10 == 0 or current_epoch == self.trainer.max_epochs):
             # map calculation takes time, calculation after some epochs
             pred_boxes, true_boxes = get_evaluation_bboxes(
-                self.val_dataloader,
+                loader,
                 self,
                 iou_threshold=self.NMS_IOU_THRESH,
                 anchors=self.ANCHORS,
@@ -168,5 +171,4 @@ class YOLOv3LitModule(LightningModule):
 
             self.log("val/MAP", mapval, prog_bar=True ,sync_dist=True)
 
-        self.val_loss = []
         # self.val_metric.reset()

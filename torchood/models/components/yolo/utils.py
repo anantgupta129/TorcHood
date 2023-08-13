@@ -157,19 +157,23 @@ def check_class_accuracy(model, loader, threshold):
     tot_obj, correct_obj = 0, 0
 
     for idx, (x, y) in tqdm(enumerate(loader)):
+        x = x.to(model.device)
         with torch.no_grad():
             out = model(x)
-
+            
         for i in range(3):
             obj = y[i][..., 0] == 1 # in paper this is Iobj_i
             noobj = y[i][..., 0] == 0  # in paper this is Iobj_i
 
+            obj = obj.cpu()
+            noobj = noobj.cpu()
+            
             correct_class += torch.sum(
-                torch.argmax(out[i][..., 5:][obj], dim=-1) == y[i][..., 5][obj]
+                torch.argmax(out[i].cpu()[..., 5:][obj], dim=-1) == y[i][..., 5][obj]
             )
             tot_class_preds += torch.sum(obj)
 
-            obj_preds = torch.sigmoid(out[i][..., 0]) > threshold
+            obj_preds = torch.sigmoid(out[i].cpu()[..., 0]) > threshold
             correct_obj += torch.sum(obj_preds[obj] == y[i][..., 0][obj])
             tot_obj += torch.sum(obj)
             correct_noobj += torch.sum(obj_preds[noobj] == y[i][..., 0][noobj])
@@ -181,7 +185,6 @@ def check_class_accuracy(model, loader, threshold):
     print(f"Class accuracy is: {class_accuracy:2f}%")
     print(f"No obj accuracy is: {no_obj_accuracy:2f}%")
     print(f"Obj accuracy is: {obj_accuracy:2f}%")
-    model.train()
     return class_accuracy, no_obj_accuracy, obj_accuracy
 
 
@@ -234,7 +237,6 @@ def get_evaluation_bboxes(
 
             train_idx += 1
 
-    model.train()
     return all_pred_boxes, all_true_boxes
 
 

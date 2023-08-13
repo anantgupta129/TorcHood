@@ -140,20 +140,16 @@ def draw_predictions(image: np.ndarray, boxes: List[List], class_labels: List[st
     return image
 
 
-def plot_couple_examples(model, loader, thresh, iou_thresh, anchors, class_labels):
-    x, y = next(iter(loader))
-    x = x.to("cuda")
-    with torch.no_grad():
-        out = model(x)
-        bboxes = [[] for _ in range(x.shape[0])]
-        for i in range(3):
-            batch_size, A, S, _, _ = out[i].shape
-            anchor = anchors[i]
-            boxes_scale_i = cells_to_bboxes(out[i], anchor, S=S, is_preds=True)
-            for idx, (box) in enumerate(boxes_scale_i):
-                bboxes[idx] += box
-
-        # model.train()
+def plot_couple_examples(model, batch, thresh, iou_thresh, anchors, class_labels):
+    x, y = batch    
+    out = model(x)
+    bboxes = [[] for _ in range(x.shape[0])]
+    for i in range(3):
+        batch_size, A, S, _, _ = out[i].shape
+        anchor = anchors[i]
+        boxes_scale_i = cells_to_bboxes(out[i], anchor, S=S, is_preds=True)
+        for idx, (box) in enumerate(boxes_scale_i):
+            bboxes[idx] += box
 
     plotted_images = []
     for i in range(batch_size // 4):

@@ -134,7 +134,7 @@ class YOLOv3LitModule(LightningModule):
             for im in plotted_image:
                 self.logger.experiment.add_image(
                     "predictions",
-                    torch.tensor(im),
+                    torch.tensor(im).numpy().copy(),
                     f"{self.current_epoch}{batch_idx}",
                 )
     

@@ -9,8 +9,8 @@ import torch
 from PIL import Image, ImageFile
 from torch.utils.data import DataLoader, Dataset
 
-from ...utils.box_utils import iou_width_height as iou
-from ...utils.box_utils import xywhn2xyxy, xyxy2xywhn
+from ...models.components.yolo.utils import iou_width_height as iou
+from ...models.components.yolo.utils import xywhn2xyxy, xyxy2xywhn
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 

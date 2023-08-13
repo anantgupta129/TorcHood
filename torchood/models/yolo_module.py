@@ -97,10 +97,10 @@ class YOLOv3LitModule(LightningModule):
             + self.loss_fn(logits[1], y1, self.scaled_anchors[1])
             + self.loss_fn(logits[2], y2, self.scaled_anchors[2])
         )
-        return loss, logits, y
+        return loss#, logits, y
 
     def training_step(self, batch: Any, batch_idx: int) -> STEP_OUTPUT:
-        loss, logits, labels = self._step(batch)
+        loss = self._step(batch)
         # update and log metrics
         self.train_loss.append(loss)
         mean_loss = sum(self.train_loss) / len(self.train_loss)
@@ -112,7 +112,7 @@ class YOLOv3LitModule(LightningModule):
         self.train_loss = []
         current_epoch = self.current_epoch
         if current_epoch > 0 and (current_epoch%3 == 0 or current_epoch == self.trainer.max_epochs):
-            class_accuracy, no_obj_accuracy, obj_accuracy = check_class_accuracy(self, self.train_dataloader(), self.CONF_THRESHOLD)
+            class_accuracy, no_obj_accuracy, obj_accuracy = check_class_accuracy(self, self.trainer.train_dataloader(), self.CONF_THRESHOLD)
             
             self.log("train/class_acc", class_accuracy, prog_bar=True,sync_dist=True)
             self.log("train/no_obj_acc", no_obj_accuracy, prog_bar=True,sync_dist=True)
@@ -121,7 +121,7 @@ class YOLOv3LitModule(LightningModule):
         # self.train_metric.reset()
 
     def validation_step(self, batch: Any, batch_idx: int) -> STEP_OUTPUT:
-        loss, logits, labels = self._step(batch)
+        loss = self._step(batch)
         # update and log metrics
         self.val_loss.append(loss)
         mean_loss = sum(self.val_loss) / len(self.val_loss)
@@ -133,7 +133,8 @@ class YOLOv3LitModule(LightningModule):
         self.val_loss = []
         
         current_epoch = self.current_epoch
-        loader = self.val_dataloader()
+        loader = self.trainer.val_dataloaders()
+        
         if current_epoch > 0 and (current_epoch%2 == 0 or current_epoch == self.trainer.max_epochs):
             class_accuracy, no_obj_accuracy, obj_accuracy = check_class_accuracy(self, loader, self.CONF_THRESHOLD)
             

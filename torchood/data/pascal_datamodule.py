@@ -5,10 +5,10 @@ from lightning.pytorch import LightningDataModule
 from torch.utils.data import DataLoader, Dataset
 from torchvision import datasets
 
-from .components.pascol_voc import YOLODataset
+from .components.pascal_voc import YOLODataset
 
 
-class PascolVOCDataModule(LightningDataModule):
+class PascalVOCDataModule(LightningDataModule):
     def __init__(
         self,
         DATASET: str,

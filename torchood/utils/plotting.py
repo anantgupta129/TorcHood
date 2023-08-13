@@ -159,7 +159,7 @@ def plot_couple_examples(model, batch, thresh, iou_thresh, anchors, class_labels
             threshold=thresh,
             box_format="midpoint",
         )
-        image = draw_predictions(x[i].permute(1, 2, 0).detach().cpu(), nms_boxes, class_labels)
+        image = draw_predictions(x[i].permute(1, 2, 0).detach().cpu().numpy().copy(), nms_boxes, class_labels)
         plotted_images.append(image)
 
     return plotted_images

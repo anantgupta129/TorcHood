@@ -64,6 +64,7 @@ class PascalVOCDataModule(LightningDataModule):
                 img_dir=self.IMG_DIR,
                 label_dir=self.LABEL_DIR,
                 anchors=self.hparams.ANCHORS,
+                mosaic_prob=0.0,
             )
 
     def train_dataloader(self):

@@ -116,7 +116,7 @@ class YOLODataset(Dataset):
         return img4, labels4
 
     def __getitem__(self, index):
-        if random.random() > self.mosaic_prob:
+        if random.random() < self.mosaic_prob:
             image, bboxes = self.load_mosaic(index)
         else:
             label_path = os.path.join(self.label_dir, self.annotations.iloc[index, 1])

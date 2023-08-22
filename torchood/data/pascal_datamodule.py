@@ -18,6 +18,7 @@ class PascalVOCDataModule(LightningDataModule):
         batch_size: int = 512,
         num_workers: int = 0,
         pin_memory: bool = False,
+        multi_res: bool = True,
         train_transforms: Union[A.Compose, None] = None,
         test_transforms: Union[A.Compose, None] = None,
     ):
@@ -52,18 +53,18 @@ class PascalVOCDataModule(LightningDataModule):
             self.data_train = YOLODataset(
                 self.train_csv_path,
                 transform=self.train_transforms,
-                S=[IMAGE_SIZE // 32, IMAGE_SIZE // 16, IMAGE_SIZE // 8],
                 img_dir=self.IMG_DIR,
                 label_dir=self.LABEL_DIR,
                 anchors=self.hparams.ANCHORS,
+                image_size=IMAGE_SIZE,
             )
             self.data_val = YOLODataset(
                 self.test_csv_path,
                 transform=self.test_transforms,
-                S=[IMAGE_SIZE // 32, IMAGE_SIZE // 16, IMAGE_SIZE // 8],
                 img_dir=self.IMG_DIR,
                 label_dir=self.LABEL_DIR,
                 anchors=self.hparams.ANCHORS,
+                image_size=IMAGE_SIZE,
                 mosaic_prob=0.0,
             )
 
@@ -74,6 +75,9 @@ class PascalVOCDataModule(LightningDataModule):
             num_workers=self.hparams.num_workers,
             pin_memory=self.hparams.pin_memory,
             shuffle=True,
+            collate_fn=self.data_train.collate_fn4
+            if self.hparams.multi_res
+            else self.data_train.collate_fn,
         )
 
     def val_dataloader(self):
@@ -83,4 +87,5 @@ class PascalVOCDataModule(LightningDataModule):
             num_workers=self.hparams.num_workers,
             pin_memory=self.hparams.pin_memory,
             shuffle=False,
+            collate_fn=self.data_val.collate_fn,
         )

@@ -2,6 +2,7 @@
 
 import os
 import random
+from typing import Any, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -18,11 +19,11 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 class YOLODataset(Dataset):
     def __init__(
         self,
-        csv_file,
-        img_dir,
-        label_dir,
-        anchors,
-        image_size=416,
+        csv_file: str,
+        img_dir: str,
+        label_dir: str,
+        anchors: List[List[float]],
+        image_size: int=416,
         S=[13, 26, 52],
         C=20,
         transform=None,
@@ -45,7 +46,7 @@ class YOLODataset(Dataset):
     def __len__(self):
         return len(self.annotations)
 
-    def load_mosaic(self, index):
+    def load_mosaic(self, index: int) -> np.ndarray:
         # YOLOv5 4-mosaic loader. Loads 1 image + 3 random images into a 4-image mosaic
         labels4 = []
         s = self.image_size
@@ -115,7 +116,7 @@ class YOLODataset(Dataset):
         labels4 = labels4[labels4[:, 3] > 0]
         return img4, labels4
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> Tuple[torch.Tensor, tuple]:
         if random.random() < self.mosaic_prob:
             image, bboxes = self.load_mosaic(index)
         else:

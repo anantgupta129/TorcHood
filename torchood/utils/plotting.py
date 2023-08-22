@@ -1,11 +1,10 @@
-from typing import Any, List
 import io
 import random
-import cv2
 from random import randint
-from typing import Any
+from typing import Any, List
 
 import albumentations as A
+import cv2
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
@@ -141,7 +140,7 @@ def draw_predictions(image: np.ndarray, boxes: List[List], class_labels: List[st
 
 
 def plot_couple_examples(model, batch, thresh, iou_thresh, anchors, class_labels):
-    x, y = batch    
+    x, y = batch
     out = model(x)
     bboxes = [[] for _ in range(x.shape[0])]
     for i in range(3):
@@ -159,7 +158,9 @@ def plot_couple_examples(model, batch, thresh, iou_thresh, anchors, class_labels
             threshold=thresh,
             box_format="midpoint",
         )
-        image = draw_predictions(x[i].permute(1, 2, 0).detach().cpu().numpy().copy(), nms_boxes, class_labels)
+        image = draw_predictions(
+            x[i].permute(1, 2, 0).detach().cpu().numpy().copy(), nms_boxes, class_labels
+        )
         plotted_images.append(image)
 
     return plotted_images

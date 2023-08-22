@@ -4,6 +4,8 @@ import torch
 from lightning.pytorch import LightningModule
 from lightning.pytorch.utilities.types import STEP_OUTPUT
 
+from ..utils.plotting import plot_couple_examples
+from .components.yolo.loss import YoloLoss
 from .components.yolo.utils import (
     cells_to_bboxes,
     check_class_accuracy,
@@ -11,8 +13,6 @@ from .components.yolo.utils import (
     mean_average_precision,
     non_max_suppression,
 )
-from ..utils.plotting import plot_couple_examples
-from .components.yolo.loss import YoloLoss
 from .components.yolo.yolov3 import YOLOv3
 
 
@@ -78,14 +78,14 @@ class YOLOv3LitModule(LightningModule):
             + self.loss_fn(logits[1], y1, self.scaled_anchors[1])
             + self.loss_fn(logits[2], y2, self.scaled_anchors[2])
         )
-        return loss#, logits, y
+        return loss  # , logits, y
 
     def training_step(self, batch: Any, batch_idx: int) -> STEP_OUTPUT:
         loss = self._step(batch)
         # update and log metrics
         self.train_loss.append(loss)
         mean_loss = sum(self.train_loss) / len(self.train_loss)
-        self.log("train/loss", mean_loss, prog_bar=True,sync_dist=True)
+        self.log("train/loss", mean_loss, prog_bar=True, sync_dist=True)
 
         return loss
 
@@ -97,8 +97,8 @@ class YOLOv3LitModule(LightningModule):
         # update and log metrics
         self.val_loss.append(loss)
         mean_loss = sum(self.val_loss) / len(self.val_loss)
-        self.log("val/loss", mean_loss, prog_bar=True,sync_dist=True)
-        
+        self.log("val/loss", mean_loss, prog_bar=True, sync_dist=True)
+
         # current_epoch = self.current_epoch
         # if current_epoch > 0 and (current_epoch%2 == 0 and batch_idx in [0, 10]):
         #     plotted_image = plot_couple_examples(
@@ -110,7 +110,7 @@ class YOLOv3LitModule(LightningModule):
         #             torch.tensor(im),
         #             f"{self.current_epoch}{batch_idx}",
         #         )
-    
+
         return loss
 
     def on_validation_epoch_end(self) -> None:

@@ -4,6 +4,7 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
+
 def iou_width_height(boxes1, boxes2):
     """
     Parameters:
@@ -160,14 +161,14 @@ def check_class_accuracy(model, loader, threshold):
         x = x.to(model.device)
         with torch.no_grad():
             out = model(x)
-            
+
         for i in range(3):
-            obj = y[i][..., 0] == 1 # in paper this is Iobj_i
+            obj = y[i][..., 0] == 1  # in paper this is Iobj_i
             noobj = y[i][..., 0] == 0  # in paper this is Iobj_i
 
             obj = obj.cpu()
             noobj = noobj.cpu()
-            
+
             correct_class += torch.sum(
                 torch.argmax(out[i].cpu()[..., 5:][obj], dim=-1) == y[i][..., 5][obj]
             )
@@ -179,9 +180,9 @@ def check_class_accuracy(model, loader, threshold):
             correct_noobj += torch.sum(obj_preds[noobj] == y[i][..., 0][noobj])
             tot_noobj += torch.sum(noobj)
 
-    class_accuracy = (correct_class/(tot_class_preds+1e-16))*100
-    no_obj_accuracy = (correct_noobj/(tot_noobj+1e-16))*100
-    obj_accuracy = (correct_obj/(tot_obj+1e-16))*100
+    class_accuracy = (correct_class / (tot_class_preds + 1e-16)) * 100
+    no_obj_accuracy = (correct_noobj / (tot_noobj + 1e-16)) * 100
+    obj_accuracy = (correct_obj / (tot_obj + 1e-16)) * 100
     print(f"Class accuracy is: {class_accuracy:2f}%")
     print(f"No obj accuracy is: {no_obj_accuracy:2f}%")
     print(f"Obj accuracy is: {obj_accuracy:2f}%")

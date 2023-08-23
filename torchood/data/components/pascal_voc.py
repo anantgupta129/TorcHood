@@ -187,7 +187,7 @@ class YOLODataset(Dataset):
         image, bboxes = zip(*batch)
 
         if random.random() > 0.5:
-            size = random.choice([352, 384, 480, 832])
+            size = random.choice([352, 384, 480, 640])
             resized_imzs = []
             for img in image:
                 resized_im = F.interpolate(

@@ -186,13 +186,13 @@ class YOLODataset(Dataset):
     def collate_fn4(self, batch: Any) -> Tuple[torch.Tensor, Any]:
         image, bboxes = zip(*batch)
 
-        if random.random() > 0.2:
+        if random.random() > 0.5:
             size = random.choice([352, 384, 480, 832])
             resized_imzs = []
             for img in image:
                 resized_im = F.interpolate(
                     img.unsqueeze(0), size=(size, size), mode="bilinear", align_corners=False
-                )
+                ).squeeze(0)
                 resized_imzs.append(resized_im)
             image = torch.stack(resized_imzs, 0)
         else:

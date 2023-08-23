@@ -107,12 +107,10 @@ class YOLOv3LitModule(LightningModule):
             plotted_image = plot_couple_examples(
                 self, batch, 0.6, 0.5, self.scaled_anchors, self.class_labels
             )
-            for im in plotted_image:
-                self.logger.experiment.add_image(
-                    "predictions",
-                    torch.tensor(im),
-                    f"{self.current_epoch}{batch_idx}",
-                )
+            captions = [f"{self.current_epoch}:{i}" for i in range(len(plotted_image))]
+            self.logger.log_image(
+                "predictions", plotted_image, captions
+            )
 
         return loss
 

@@ -25,7 +25,7 @@ class YOLOv3LitModule(LightningModule):
         self.threshold = config.CONF_THRESHOLD
         self.NMS_IOU_THRESH = config.NMS_IOU_THRESH
         self.ANCHORS = config.ANCHORS
-        self.S = config.S
+        # self.S = config.S
         self.CONF_THRESHOLD = config.CONF_THRESHOLD
         self.MAP_IOU_THRESH = config.MAP_IOU_THRESH
         self.NUM_CLASSES = config.NUM_CLASSES
@@ -66,11 +66,13 @@ class YOLOv3LitModule(LightningModule):
     def _step(self, batch: Any) -> torch.Tensor:
         x, y = batch
         y0, y1, y2 = y
-        if self.scaled_anchors is None:
-            self.scaled_anchors = (
-                torch.tensor(self.ANCHORS)
-                * torch.tensor(self.S).unsqueeze(1).unsqueeze(1).repeat(1, 3, 2)
-            ).to(y0.device)
+        
+        imgsz = x.shape[-1]
+        scales = [imgsz // 32, imgsz // 16, imgsz // 8]
+        self.scaled_anchors = (
+            torch.tensor(self.ANCHORS)
+            * torch.tensor(scales).unsqueeze(1).unsqueeze(1).repeat(1, 3, 2)
+        ).to(y0.device)
 
         logits = self.forward(x)
         loss = (

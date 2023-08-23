@@ -36,3 +36,29 @@ def auto_find_lr_and_fit(
         print(f" [x] Traced model saved at {cwd}/model.traced.pt")
 
     return model, trainer
+
+
+def train_lightning(
+    model: pl.LightningModule,
+    datamodule: pl.LightningDataModule,
+    trainer_args: dict,
+    save_traced_model: bool = False,
+    input_shape: tuple = (1, 3, 32, 32)
+):
+    callbacks = [
+        RichProgressBar(leave=True),
+        LearningRateMonitor(logging_interval="step"),
+    ]
+
+    trainer = pl.Trainer(callbacks=callbacks, **trainer_args)
+    trainer.fit(model=model, datamodule=datamodule)
+
+    model = trainer.model
+    if save_traced_model:
+        model.to_torchscript(
+            method="trace", example_inputs=torch.rand(input_shape), file_path="model.traced.pt"
+        )
+        cwd = os.getcwd()
+        print(f" [x] Traced model saved at {cwd}/model.traced.pt")
+
+    return model, trainer

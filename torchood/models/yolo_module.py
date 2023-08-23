@@ -99,17 +99,18 @@ class YOLOv3LitModule(LightningModule):
         mean_loss = sum(self.val_loss) / len(self.val_loss)
         self.log("val/loss", mean_loss, prog_bar=True, sync_dist=True)
 
-        # current_epoch = self.current_epoch
-        # if current_epoch > 0 and (current_epoch%2 == 0 and batch_idx in [0, 10]):
-        #     plotted_image = plot_couple_examples(
-        #         self, batch, 0.6, 0.5, self.scaled_anchors, self.class_labels
-        #     )
-        #     for im in plotted_image:
-        #         self.logger.experiment.add_image(
-        #             "predictions",
-        #             torch.tensor(im),
-        #             f"{self.current_epoch}{batch_idx}",
-        #         )
+        # plot sample images starts after 10 epoch
+        current_epoch = self.current_epoch
+        if current_epoch > 10 and (current_epoch%10 == 0 and batch_idx in [0, 10]):
+            plotted_image = plot_couple_examples(
+                self, batch, 0.6, 0.5, self.scaled_anchors, self.class_labels
+            )
+            for im in plotted_image:
+                self.logger.experiment.add_image(
+                    "predictions",
+                    torch.tensor(im),
+                    f"{self.current_epoch}{batch_idx}",
+                )
 
         return loss
 

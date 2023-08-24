@@ -2,8 +2,10 @@
 
 import os
 import random
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Union
 
+import cv2
+import albumentations as A
 import numpy as np
 import pandas as pd
 import torch
@@ -25,8 +27,9 @@ class YOLODataset(Dataset):
         label_dir: str,
         anchors: List[List[float]],
         image_size: int = 416,
-        transform=None,
+        transform : Union[A.Compose, None] = None,
         mosaic_prob: float = 0.8,
+        mixup_prob: float = 0.2,
     ):
         self.annotations = pd.read_csv(csv_file)
         self.img_dir = img_dir
@@ -39,11 +42,22 @@ class YOLODataset(Dataset):
         self.num_anchors_per_scale = self.num_anchors // 3
         self.ignore_iou_thresh = 0.5
         self.mosaic_prob = mosaic_prob
+        self.mixup_prob = mixup_prob
 
     def __len__(self):
         return len(self.annotations)
 
-    def load_mosaic(self, index: int) -> np.ndarray:
+    def load_one(self, index: int) -> Tuple[np.ndarray, Any]:
+        label_path = os.path.join(self.label_dir, self.annotations.iloc[index, 1])
+        bboxes = np.roll(
+            np.loadtxt(fname=label_path, delimiter=" ", ndmin=2), 4, axis=1
+        ).tolist()
+        img_path = os.path.join(self.img_dir, self.annotations.iloc[index, 0])
+        image = np.array(Image.open(img_path).convert("RGB"))
+        
+        return image, bboxes
+    
+    def load_mosaic(self, index: int) -> Tuple[np.ndarray, Any]:
         # YOLOv5 4-mosaic loader. Loads 1 image + 3 random images into a 4-image mosaic
         labels4 = []
         s = self.image_size
@@ -113,16 +127,33 @@ class YOLODataset(Dataset):
         labels4 = labels4[labels4[:, 3] > 0]
         return img4, labels4
 
+    def load_mixup(self, index: int, resize: tuple) -> Tuple[np.ndarray, Any]:
+        # MixUp https://arxiv.org/pdf/1710.09412.pdf
+        if random.random() < 0.5:
+            image, bboxes = self.load_mosaic(index)
+        else:
+            # 0.5 probablity of selceting the current image or any other image from dataset
+            idx = random.choice(range(len(self)))
+            idx = random.choice([index, idx])
+            image, bboxes = self.load_one(idx)
+
+        h0, w0 = resize[:2]
+        image = cv2.resize(image, (w0,h0), interpolation=cv2.INTER_AREA)
+
+        return image, bboxes
+        
     def __getitem__(self, index: int) -> Tuple[torch.Tensor, tuple]:
         if random.random() < self.mosaic_prob:
             image, bboxes = self.load_mosaic(index)
         else:
-            label_path = os.path.join(self.label_dir, self.annotations.iloc[index, 1])
-            bboxes = np.roll(
-                np.loadtxt(fname=label_path, delimiter=" ", ndmin=2), 4, axis=1
-            ).tolist()
-            img_path = os.path.join(self.img_dir, self.annotations.iloc[index, 0])
-            image = np.array(Image.open(img_path).convert("RGB"))
+            image, bboxes = self.load_one(index)
+        
+        if random.random() < self.mixup_prob:
+            image2, bboxes2 = self.load_mixup(index, image.shape)
+                
+            r = np.random.beta(8.0, 8.0)  # mixup ratio, alpha=beta=8.0
+            image = (image * r + image2 * (1 - r)).astype(np.uint8)
+            bboxes = np.concatenate((bboxes, bboxes2), 0)
 
         if self.transform:
             augmentations = self.transform(image=image, bboxes=bboxes)
@@ -214,7 +245,7 @@ class YOLODataset(Dataset):
         targets_3 = torch.stack(targets_3, 0)
 
         return image, [targets_1, targets_2, targets_3]
-
+    
 
 # def test():
 #     import matplotlib.pyplot as plt

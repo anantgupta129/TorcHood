@@ -7,3 +7,5 @@ torchinfo
 grad-cam
 torchmetrics==0.8.0
 pandas
+datasets==2.14.4
+tokenizers==0.13.3

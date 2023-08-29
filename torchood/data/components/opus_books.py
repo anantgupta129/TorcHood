@@ -72,7 +72,7 @@ class BilingualDataset(Dataset):
         assert label.size(0) == self.seq_len
 
         return {
-            "enoder_input": enoder_input,
+            "encoder_input": enoder_input,
             "decoder_input": decoder_input,
             "label": label,
             "encoder_mask": (enoder_input != self.pad_token)

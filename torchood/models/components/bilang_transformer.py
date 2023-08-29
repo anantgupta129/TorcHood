@@ -262,7 +262,7 @@ class DecoderBlock(nn.Module):
     ) -> None:
         super().__init__()
         self.self_attention_block = self_attention_block
-        self.cross_attention_block = self.cross_attention_block
+        self.cross_attention_block = cross_attention_block
         self.feed_forward_block = feed_forward_block
         self.residual_connections = nn.ModuleList([ResidualConnection(dropout) for _ in range(3)])
 
@@ -333,6 +333,7 @@ class Transformer(nn.Module):
         src_pos,
         tgt_pos,
     ) -> None:
+        super().__init__()
         self.encoder = encoder
         self.decoder = decoder
         self.src_embed = src_embed
@@ -418,7 +419,8 @@ def build_transformer(
         decoder_block = DecoderBlock(
             decoder_self_attention_block,
             decoder_cross_attention_block,
-            feed_forward_block.dropout,
+            feed_forward_block,
+            dropout,
         )
         decoder_blocks.append(decoder_block)
 

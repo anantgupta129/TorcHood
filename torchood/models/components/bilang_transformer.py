@@ -284,7 +284,7 @@ class DecoderBlock(nn.Module):
 
 
 # The Decoder class is a component of the Transformer model that performs the decoding process. It consists of multiple layers of decoder blocks, each containing self-attention and feed-forward sub-layers. The class applies layer normalization to the output of each decoder block.
-class Decoder(nn.module):
+class Decoder(nn.Module):
     def __init__(self, layers: nn.ModuleList) -> None:
         super().__init__()
         self.layers = layers

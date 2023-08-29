@@ -78,7 +78,7 @@ class InputEmbedding(nn.Module):
         """
         # x-> (batch,seq_len) -> (batch,seq_len,de_model)
         # match.sqrt according to model (After Numerical research and for numerical stability)
-        return self.embedding(x) * math.sqrt(self.d_model)
+        return self.embedding(x.long()) * math.sqrt(self.d_model)
 
 
 # Position Embedding
@@ -116,7 +116,8 @@ class PositionEmbedding(nn.Module):
         sequences. The positional encodings are created using sine and cosine functions. The
         positional encodings are registered as buffer tensors in the module.
         """
-        x = x + (self.position_encoding[:, : x.shape[1], :]).requires_grad(
+        # print(x)
+        x = x + (self.position_encoding[:, : x.shape[1], :]).requires_grad_(
             False
         )  # (batch,seq_len,d_model)
         return self.dropout(x)
@@ -189,7 +190,7 @@ class MultiHeadAttentionBlock(nn.Module):
         value = self.w_v(v)
 
         # (batch,seq_len,d_model) --> (batch_size,seq_len,h,d_k) --> (batch,h,seq_len,d_k)
-        query = query.view(query.shape[0], query.shape[1].self.h.self.d_k).transpose(1, 2)
+        query = query.view(query.shape[0], query.shape[1], self.h, self.d_k).transpose(1, 2)
         key = key.view(key.shape[0], key.shape[1], self.h, self.d_k).transpose(1, 2)
         value = value.view(value.shape[0], value.shape[1], self.h, self.d_k).transpose(1, 2)
 
@@ -229,7 +230,7 @@ class EncoderBlock(nn.Module):
         forward block. Add residual connections and layer normalization between the self-attention
         block and the feed-forward block.
         """
-        x = self.residual_connections[0](x, lambda x: self.self.attention_block(x, x, x, src_mask))
+        x = self.residual_connections[0](x, lambda x: self.self_attention_block(x, x, x, src_mask))
         x = self.residual_connections[1](x, self.feed_forward_block)
         return x
 
@@ -364,7 +365,7 @@ class Transformer(nn.Module):
         # Decodes the target sequence by passing it through the input embedding layer, positional encoding layer, and the decoder. Takes the encoded source sequence, source mask, target sequence, and target mask as inputs. Returns the decoded target sequence.
         tgt = self.tgt_embed(tgt)
         tgt = self.tgt_pos(tgt)
-        return self.decoder(tgt, encoder_output, tgt_mask)
+        return self.decoder(tgt, encoder_output, src_mask, tgt_mask)
 
     def project(self, x):
         # Projects the input tensor x using the projection layer. Returns the projected output.

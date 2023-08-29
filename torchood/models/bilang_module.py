@@ -90,7 +90,9 @@ class BiLangLitModule(LightningModule):
         # check if batch size is 1
         assert encoder_input.size(0) == 1, "Batch size must be 1 for validation"
 
-        out = self.greedy_decode(encoder_input, encoder_mask, max_len=1024, device=self.net.device)
+        out = self.greedy_decode(
+            encoder_input, encoder_mask, max_len=self.seq_len, device=self.device
+        )
 
         source_text = batch["src_txt"][0]
         target_text = batch["tgt_text"][0]

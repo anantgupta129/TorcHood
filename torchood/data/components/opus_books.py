@@ -43,17 +43,28 @@ class BilingualDataset(Dataset):
         if src_num_padding < 0 or tgt_num_padding < 0:
             raise ValueError("Sentence is too long")
 
-        enoder_input = (
-            [self.sos_token] + src_ids + [self.eos_token] + [self.pad_token] * src_num_padding
-        )
-        decoder_input = [self.sos_token] * tgt_ids + [self.pad_token] * tgt_num_padding
+        enoder_input = [
+            self.sos_token,
+            torch.tensor(src_ids, dtype=torch.int64),
+            self.eos_token,
+            torch.tensor([self.pad_token] * src_num_padding, dtype=torch.int64),
+        ]
+        enoder_input = torch.tensor(enoder_input, dim=0)
 
-        enoder_input = torch.tensor(enoder_input, dtype=torch.int64)
-        decoder_input = torch.tensor(decoder_input, dtype=torch.int64)
+        decoder_input = [
+            self.sos_token,
+            torch.tensor(tgt_ids, dtype=torch.int64),
+            torch.tensor([self.pad_token] * tgt_num_padding, dtype=torch.int64),
+        ]
+        decoder_input = torch.tensor(decoder_input, dim=0)
 
         # add only </s>
-        label = tgt_ids, [self.eos_token] + [self.pad_token] * tgt_num_padding
-        label = torch.tensor(label, dtype=torch.int64)
+        label = [
+            torch.tensor(tgt_ids, dtype=torch.int64),
+            self.eos_token,
+            torch.tensor([self.pad_token] * tgt_num_padding, dtype=torch.int64),
+        ]
+        label = torch.tensor(label, dim=0)
 
         # double check the size of tensors is correct
         assert enoder_input.size(0) == self.seq_len

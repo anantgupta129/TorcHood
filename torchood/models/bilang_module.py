@@ -16,7 +16,6 @@ class BiLangLitModule(LightningModule):
     def __init__(
         self,
         learning_rate: float,
-        criterion: Any,
         config: dict,
         tokenizer_src: Any,
         tokenizer_tgt: Any,
@@ -24,7 +23,6 @@ class BiLangLitModule(LightningModule):
         super().__init__()
 
         self.learning_rate = learning_rate
-        self.criterion = criterion
         self.tokenizer_src = tokenizer_src
         self.tokenizer_tgt = tokenizer_tgt
 
@@ -38,6 +36,9 @@ class BiLangLitModule(LightningModule):
             self.seq_len,
             self.seq_len,
             d_model=config["d_model"],
+        )
+        self.criterion = nn.CrossEntropyLoss(
+            ignore_index=tokenizer_src.token_to_id("[PAF]"), label_smoothing=0.1
         )
 
         self.train_loss = []

@@ -22,7 +22,8 @@ def make_tokenizer(config: Any, ds: Any, lang: str) -> Tokenizer:
     tokenizer_path = Path(config["tokenizer_file"].format(lang))
     if not tokenizer_path.is_file():
         print(f"Tokenizer not found. Making for {lang}...")
-        tokenizer = Tokenizer(WordLevel(unk_token="[UNK]"), pre_tokenizer=Whitespace())
+        tokenizer = Tokenizer(WordLevel(unk_token="[UNK]"))
+        tokenizer.pre_tokenizer = Whitespace()
         trainer = WordLevelTrainer(
             special_tokens=["[UNK]", "[PAD]", "[SOS]", "[EOS]"], min_frequency=2
         )

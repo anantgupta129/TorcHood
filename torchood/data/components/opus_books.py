@@ -49,14 +49,14 @@ class BilingualDataset(Dataset):
             self.eos_token,
             torch.tensor([self.pad_token] * src_num_padding, dtype=torch.int64),
         ]
-        enoder_input = torch.tensor(enoder_input, dim=0)
+        enoder_input = torch.cat(enoder_input, dim=0)
 
         decoder_input = [
             self.sos_token,
             torch.tensor(tgt_ids, dtype=torch.int64),
             torch.tensor([self.pad_token] * tgt_num_padding, dtype=torch.int64),
         ]
-        decoder_input = torch.tensor(decoder_input, dim=0)
+        decoder_input = torch.cat(decoder_input, dim=0)
 
         # add only </s>
         label = [
@@ -64,7 +64,7 @@ class BilingualDataset(Dataset):
             self.eos_token,
             torch.tensor([self.pad_token] * tgt_num_padding, dtype=torch.int64),
         ]
-        label = torch.tensor(label, dim=0)
+        label = torch.cat(label, dim=0)
 
         # double check the size of tensors is correct
         assert enoder_input.size(0) == self.seq_len

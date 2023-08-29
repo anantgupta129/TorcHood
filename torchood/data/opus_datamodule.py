@@ -71,10 +71,20 @@ class OpusBooksDataModule(LightningDataModule):
             train_ds_raw, val_ds_raw = random_split(ds_raw, [train_size, val_size])
 
             self.data_train = BilingualDataset(
-                train_ds_raw, tokenizer_src, tokenizer_tgt, lang_src, lang_tgt
+                train_ds_raw,
+                self.hparams.config["seq_len"],
+                tokenizer_src,
+                tokenizer_tgt,
+                lang_src,
+                lang_tgt,
             )
             self.data_val = BilingualDataset(
-                val_ds_raw, tokenizer_src, tokenizer_tgt, lang_src, lang_tgt
+                val_ds_raw,
+                self.hparams.config["seq_len"],
+                tokenizer_src,
+                tokenizer_tgt,
+                lang_src,
+                lang_tgt,
             )
             self.tokenizer_src = tokenizer_src
             self.tokenizer_tgt = tokenizer_tgt

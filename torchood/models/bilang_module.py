@@ -132,13 +132,13 @@ class BiLangLitModule(LightningModule):
         # lr_scheduler = {"scheduler": scheduler, "interval": "step"}
         return [optimizer]
 
-    def greedy_decode(self, source, source_mask, max_len, device):
+    def greedy_decode(self, source, source_mask, max_len: int, device: str):
         sos_idx = self.tokenizer_tgt.token_to_id("[SOS]")
         eos_idx = self.tokenizer_tgt.token_to_id("[EOS]")
 
         # encoder output
         encoder_output = self.net.encode(source, source_mask)
-        decoder_input = torch.empty(1, 1).fill_(sos_idx).to(device)
+        decoder_input = torch.empty(1, 1).fill_(sos_idx).type_as(source).to(device)
         while True:
             if decoder_input.size(1) == max_len:
                 break
@@ -150,7 +150,11 @@ class BiLangLitModule(LightningModule):
             prob = self.net.project(out[:, -1])
             _, next_word = torch.max(prob, dim=1)
             decoder_input = torch.cat(
-                [decoder_input, torch.empty(1, 1).fill_(next_word.item()).to(device)], dim=1
+                [
+                    decoder_input,
+                    torch.empty(1, 1).type_as(source).fill_(next_word.item()).to(device),
+                ],
+                dim=1,
             )
             if next_word == eos_idx:
                 break

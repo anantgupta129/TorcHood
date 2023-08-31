@@ -94,7 +94,7 @@ class BiLangLitModule(LightningModule):
             encoder_input, encoder_mask, max_len=self.seq_len, device=self.device
         )
 
-        source_text = batch["src_txt"][0]
+        source_text = batch["src_text"][0]
         target_text = batch["tgt_text"][0]
         out_text = self.tokenizer_tgt.decode(out.detach().cpu().numpy())
 

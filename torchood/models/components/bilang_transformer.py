@@ -330,9 +330,9 @@ class Transformer(nn.Module):
         decoder: Decoder,
         src_embed: InputEmbedding,
         tgt_embed: InputEmbedding,
+        src_pos: PositionEmbedding,
+        tgt_pos: PositionEmbedding,
         projection_layer: ProjectionLayer,
-        src_pos,
-        tgt_pos,
     ) -> None:
         super().__init__()
         self.encoder = encoder

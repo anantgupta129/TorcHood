@@ -38,7 +38,7 @@ class BiLangLitModule(LightningModule):
             d_model=config["d_model"],
         )
         self.criterion = nn.CrossEntropyLoss(
-            ignore_index=tokenizer_src.token_to_id("[PAF]"), label_smoothing=0.1
+            ignore_index=tokenizer_src.token_to_id("[PAD]"), label_smoothing=0.1
         )
 
         self.train_loss = []

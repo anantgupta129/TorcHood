@@ -119,5 +119,5 @@ class OpusBooksDataModule(LightningDataModule):
             batch_size=1,
             num_workers=self.hparams.num_workers,
             pin_memory=self.hparams.pin_memory,
-            shuffle=False,
+            shuffle=True,
         )

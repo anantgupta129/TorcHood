@@ -107,7 +107,8 @@ class BiLangLitModule(LightningModule):
         if (
             isinstance(self.logger, pl_loggers.wandb.WandbLogger)
             and current_epoch > 5
-            and (current_epoch % 2 == 0 and batch_idx in [0, 10, 15])
+            and current_epoch % 2 == 0
+            and batch_idx in [0, 10, 15]
         ):
             columns = ["input", "label", "prediction"]
             data = [[source_text, target_text, out_text]]

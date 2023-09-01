@@ -3,6 +3,7 @@ from typing import Any, List, Optional, Union
 import torch
 import torch.nn as nn
 from lightning.pytorch import LightningModule
+from lightning.pytorch import loggers as pl_loggers
 from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torch.optim.lr_scheduler import LambdaLR
 from torchmetrics import BLEUScore, CharErrorRate, WordErrorRate
@@ -101,6 +102,16 @@ class BiLangLitModule(LightningModule):
         self.source_texts.append(source_text)
         self.expected.append(target_text)
         self.predicted.append(out_text)
+
+        current_epoch = self.current_epoch
+        if (
+            isinstance(self.logger, pl_loggers.wandb.WandbLogger)
+            and current_epoch > 5
+            and (current_epoch % 2 == 0 and batch_idx in [0, 10, 15])
+        ):
+            columns = ["input", "label", "prediction"]
+            data = [[source_text, target_text, out_text]]
+            self.logger.log_text(key="samples", columns=columns, data=data)
 
     def on_validation_epoch_end(self) -> None:
         cer = self.char_error_rate(self.predicted, self.expected)

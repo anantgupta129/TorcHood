@@ -7,6 +7,7 @@ from lightning.pytorch.callbacks import (
     LearningRateFinder,
     LearningRateMonitor,
     RichProgressBar,
+    TQDMProgressBar,
 )
 
 
@@ -43,7 +44,7 @@ def train_lightning(
     datamodule: pl.LightningDataModule,
     trainer_args: dict,
     save_traced_model: bool = False,
-    input_shape: tuple = (1, 3, 32, 32)
+    input_shape: tuple = (1, 3, 32, 32),
 ):
     callbacks = [
         RichProgressBar(leave=True),
@@ -62,3 +63,10 @@ def train_lightning(
         print(f" [x] Traced model saved at {cwd}/model.traced.pt")
 
     return model, trainer
+
+
+class PersistentProgressBar(TQDMProgressBar):
+    def on_train_epoch_start(self, trainer: "pl.Trainer", *_: Any) -> None:
+        super.on_train_epoch_start(trainer, *_)
+        # print new line in beginning of each epoch
+        print()

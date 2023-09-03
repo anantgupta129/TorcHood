@@ -10,7 +10,7 @@ from tokenizers.pre_tokenizers import Whitespace
 from tokenizers.trainers import WordLevelTrainer
 from torch.utils.data import DataLoader, Dataset, random_split
 
-from .components.opus_books import BilingualDataset
+from .components.opus_books_dynamic_padding import BilingualDataset
 
 
 def get_all_sentences(ds: Any, lang: str):
@@ -111,6 +111,7 @@ class OpusBooksDataModule(LightningDataModule):
             num_workers=self.hparams.num_workers,
             pin_memory=self.hparams.pin_memory,
             shuffle=True,
+            collate_fn=self.data_train.collate_fn,
         )
 
     def val_dataloader(self) -> EVAL_DATALOADERS:
@@ -120,4 +121,5 @@ class OpusBooksDataModule(LightningDataModule):
             num_workers=self.hparams.num_workers,
             pin_memory=self.hparams.pin_memory,
             shuffle=True,
+            collate_fn=self.data_val.collate_fn,
         )

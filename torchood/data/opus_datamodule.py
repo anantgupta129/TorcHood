@@ -66,10 +66,23 @@ class OpusBooksDataModule(LightningDataModule):
             tokenizer_src = make_tokenizer(self.hparams.config, ds_raw, lang_src)
             tokenizer_tgt = make_tokenizer(self.hparams.config, ds_raw, lang_tgt)
 
+            sorted_ds_raw = sorted(ds_raw, key=lambda x: len(x["translation"][lang_src]))
+            filtered_sorted_ds_raw = [
+                k for k in sorted_ds_raw if len(k["translation"][lang_src]) < 120
+            ]
+            filtered_sorted_ds_raw = [
+                k for k in filtered_sorted_ds_raw if len(k["translation"][lang_tgt]) < 120
+            ]
+            filtered_sorted_ds_raw = [
+                k
+                for k in filtered_sorted_ds_raw
+                if len(k["translation"][lang_src]) + 10 > len(k["translation"][lang_tgt])
+            ]
+
             # train val split
-            train_size = int(0.9 * len(ds_raw))
-            val_size = len(ds_raw) - train_size
-            train_ds_raw, val_ds_raw = random_split(ds_raw, [train_size, val_size])
+            train_size = int(0.9 * len(filtered_sorted_ds_raw))
+            val_size = len(filtered_sorted_ds_raw) - train_size
+            train_ds_raw, val_ds_raw = random_split(filtered_sorted_ds_raw, [train_size, val_size])
 
             self.data_train = BilingualDataset(
                 train_ds_raw,

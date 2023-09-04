@@ -86,33 +86,31 @@ class BiLangLitModule(LightningModule):
         self.train_loss = []
 
     def validation_step(self, batch: Any, batch_idx: int) -> STEP_OUTPUT:
-        encoder_input = batch["encoder_input"]
-        encoder_mask = batch["encoder_mask"]
-        # check if batch size is 1
-        assert encoder_input.size(0) == 1, "Batch size must be 1 for validation"
+        # validation takes a lot of time so running it over few batches and on complete dataset
+        # on last epoch to speed up overall training
+        if self.current_epoch == self.trainer.max_epochs or batch_idx % 100 == 0:
+            encoder_input = batch["encoder_input"]
+            encoder_mask = batch["encoder_mask"]
+            # check if batch size is 1
+            assert encoder_input.size(0) == 1, "Batch size must be 1 for validation"
 
-        out = self.greedy_decode(
-            encoder_input, encoder_mask, max_len=self.seq_len, device=self.device
-        )
+            out = self.greedy_decode(
+                encoder_input, encoder_mask, max_len=self.seq_len, device=self.device
+            )
 
-        source_text = batch["src_text"][0]
-        target_text = batch["tgt_text"][0]
-        out_text = self.tokenizer_tgt.decode(out.detach().cpu().numpy())
+            source_text = batch["src_text"][0]
+            target_text = batch["tgt_text"][0]
+            out_text = self.tokenizer_tgt.decode(out.detach().cpu().numpy())
 
-        self.source_texts.append(source_text)
-        self.expected.append(target_text)
-        self.predicted.append(out_text)
+            self.source_texts.append(source_text)
+            self.expected.append(target_text)
+            self.predicted.append(out_text)
 
-        current_epoch = self.current_epoch
-        if (
-            isinstance(self.logger, pl_loggers.wandb.WandbLogger)
-            and current_epoch > 5
-            and current_epoch % 2 == 0
-            and batch_idx in [0, 10, 15]
-        ):
-            columns = ["input", "label", "prediction"]
-            data = [[source_text, target_text, out_text]]
-            self.logger.log_text(key="samples", columns=columns, data=data)
+            current_epoch = self.current_epoch
+            if current_epoch > 5 and current_epoch % 2 == 0 and batch_idx in [100, 200, 500]:
+                columns = ["input", "label", "prediction"]
+                data = [[source_text, target_text, out_text]]
+                self.logger.log_text(key="samples", columns=columns, data=data)
 
     def on_validation_epoch_end(self) -> None:
         cer = self.char_error_rate(self.predicted, self.expected)

@@ -8,7 +8,7 @@ from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torch.optim.lr_scheduler import LambdaLR
 from torchmetrics import BLEUScore, CharErrorRate, WordErrorRate
 
-from torchood.data.components.opus_books import casual_mask
+from torchood.data.components.opus_books import causal_mask
 
 from .components.bilang_transformer import build_transformer
 
@@ -155,7 +155,7 @@ class BiLangLitModule(LightningModule):
             if decoder_input.size(1) == max_len:
                 break
             # build target mask
-            decoder_mask = casual_mask(decoder_input.size(1)).type_as(source_mask).to(device)
+            decoder_mask = causal_mask(decoder_input.size(1)).type_as(source_mask).to(device)
             out = self.net.decode(encoder_output, source_mask, decoder_input, decoder_mask)
 
             # get next token

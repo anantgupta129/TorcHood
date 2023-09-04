@@ -4,7 +4,7 @@ import torch
 from torch.utils.data import Dataset
 
 
-def casual_mask(size):
+def causal_mask(size):
     mask = torch.triu(torch.ones((1, size, size)), diagonal=1).type(torch.int)
     return mask
 
@@ -43,7 +43,7 @@ class BilingualDataset(Dataset):
         all_decoder_inputs = []
         all_labels = []
         all_encoder_mask = []
-        all_deocder_mask = []
+        all_decoder_mask = []
         all_src_text = []
         all_tgt_text = []
 
@@ -57,8 +57,8 @@ class BilingualDataset(Dataset):
             tgt_num_padding = max_decoder_input - len(tgt_ids) - 1
 
             # Make sure that pad is non negative, if it is then sentence is to long
-            # if src_num_padding < 0 or tgt_num_padding < 0:
-            #     raise ValueError("Sentence is too long")
+            if src_num_padding < 0 or tgt_num_padding < 0:
+                raise ValueError("Sentence is too long")
 
             enoder_input = [
                 self.sos_token,
@@ -79,11 +79,11 @@ class BilingualDataset(Dataset):
                 torch.tensor([self.pad_token] * tgt_num_padding, dtype=torch.int64),
             ]
             decoder_input = torch.cat(decoder_input, dim=0)
-            decoder_mask = (decoder_input != self.pad_token).unsqueeze(0).int() & casual_mask(
+            decoder_mask = (decoder_input != self.pad_token).unsqueeze(0).int() & causal_mask(
                 decoder_input.size(0)
             )  # (1, seq_len) & (1, seq_len, seq_len)
             all_decoder_inputs.append(decoder_input)
-            all_deocder_mask.append(decoder_mask)
+            all_decoder_mask.append(decoder_mask)
 
             # add only </s>
             label = [
@@ -102,7 +102,7 @@ class BilingualDataset(Dataset):
             "decoder_input": torch.stack(all_decoder_inputs, 0),
             "label": torch.stack(all_labels, 0),
             "encoder_mask": torch.stack(all_encoder_mask, 0),
-            "decoder_mask": torch.stack(all_deocder_mask, 0),
+            "decoder_mask": torch.stack(all_decoder_mask, 0),
             "src_text": all_src_text,
             "tgt_text": all_tgt_text,
         }

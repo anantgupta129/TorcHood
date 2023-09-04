@@ -68,10 +68,10 @@ class OpusBooksDataModule(LightningDataModule):
 
             sorted_ds_raw = sorted(ds_raw, key=lambda x: len(x["translation"][lang_src]))
             filtered_sorted_ds_raw = [
-                k for k in sorted_ds_raw if len(k["translation"][lang_src]) < 120
+                k for k in sorted_ds_raw if len(k["translation"][lang_src]) < 150
             ]
             filtered_sorted_ds_raw = [
-                k for k in filtered_sorted_ds_raw if len(k["translation"][lang_tgt]) < 120
+                k for k in filtered_sorted_ds_raw if len(k["translation"][lang_tgt]) < 150
             ]
             filtered_sorted_ds_raw = [
                 k

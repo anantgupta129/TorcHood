@@ -10,7 +10,7 @@ from tokenizers.pre_tokenizers import Whitespace
 from tokenizers.trainers import WordLevelTrainer
 from torch.utils.data import DataLoader, Dataset, random_split
 
-from .components.opus_books_dynamic_padding import BilingualDataset
+from .components.opus_books import BilingualDataset
 
 
 def get_all_sentences(ds: Any, lang: str):

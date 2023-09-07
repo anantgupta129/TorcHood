@@ -20,6 +20,7 @@ class BiLangLitModule(LightningModule):
         config: dict,
         tokenizer_src: Any,
         tokenizer_tgt: Any,
+        parameter_sharing: bool = False,
     ) -> None:
         super().__init__()
 
@@ -37,6 +38,7 @@ class BiLangLitModule(LightningModule):
             self.seq_len,
             self.seq_len,
             d_model=config["d_model"],
+            parameter_sharing=parameter_sharing,
         )
         self.criterion = nn.CrossEntropyLoss(
             ignore_index=tokenizer_src.token_to_id("[PAD]"), label_smoothing=0.1

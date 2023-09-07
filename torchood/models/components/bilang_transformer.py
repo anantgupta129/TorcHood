@@ -383,6 +383,7 @@ def build_transformer(
     h: int = 8,
     dropout: float = 0.1,
     d_ff: int = 2048,
+    parameter_sharing: bool = False,
 ) -> Transformer:
     """Create embedding layers for the source and target inputs.
 
@@ -403,6 +404,8 @@ def build_transformer(
     src_pos = PositionEmbedding(d_model, src_seq_len, dropout)
     tgt_pos = PositionEmbedding(d_model, tgt_seq_len, dropout)
 
+    if parameter_sharing:
+        N //= 2
     # create the decoder block
     encoder_blocks = []
     for _ in range(N):  # Total 6 encoder blocks
@@ -425,6 +428,9 @@ def build_transformer(
         )
         decoder_blocks.append(decoder_block)
 
+    if parameter_sharing:
+        encoder_blocks = encoder_blocks + encoder_blocks[::-1]
+        decoder_blocks = decoder_blocks + decoder_blocks[::-1]
     # create a encoder and decoder
     encoder = Encoder(nn.ModuleList(encoder_blocks))
     decoder = Decoder(nn.ModuleList(decoder_blocks))

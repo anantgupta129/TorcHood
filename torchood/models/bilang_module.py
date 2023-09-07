@@ -86,9 +86,8 @@ class BiLangLitModule(LightningModule):
         self.train_loss = []
 
     def validation_step(self, batch: Any, batch_idx: int) -> STEP_OUTPUT:
-        # validation takes a lot of time so running it over few batches and on complete dataset
-        # on last epoch to speed up overall training
-        if self.current_epoch == self.trainer.max_epochs or batch_idx % 100 == 0:
+        # validation takes a lot of time so running it on last epoch to speed up overall training
+        if self.current_epoch == self.trainer.max_epochs:
             encoder_input = batch["encoder_input"]
             encoder_mask = batch["encoder_mask"]
             # check if batch size is 1
@@ -105,12 +104,6 @@ class BiLangLitModule(LightningModule):
             self.source_texts.append(source_text)
             self.expected.append(target_text)
             self.predicted.append(out_text)
-
-            current_epoch = self.current_epoch
-            if current_epoch > 5 and current_epoch % 2 == 0 and batch_idx in [100, 200, 500]:
-                columns = ["input", "label", "prediction"]
-                data = [[source_text, target_text, out_text]]
-                self.logger.log_text(key="samples", columns=columns, data=data)
 
     def on_validation_epoch_end(self) -> None:
         cer = self.char_error_rate(self.predicted, self.expected)

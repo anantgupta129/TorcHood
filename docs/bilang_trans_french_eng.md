@@ -6,7 +6,8 @@ In this tutorial, we provide a step-by-step guide to train a transformer model f
 
 - [Training a Transformer from Scratch for Language Translation](#training-a-transformer-from-scratch-for-language-translation)
   - [Table of Contents](#table-of-contents)
-    - [What is Dynamic Padding](#What-is-Dynamic-Padding)
+    - [Dynamic Padding](#Dynamic-Padding)
+    - [Parameter Sharing](#%5BParameter-Sharing%5D)
     - [Step 0: Environment Setup](#step-0-environment-setup)
     - [Step 1: Essential Imports](#step-1-essential-imports)
     - [Step 2: Dataset and Model Initialization](#step-2-dataset-and-model-initialization)
@@ -88,10 +89,11 @@ warnings.filterwarnings("ignore")
 
 import os
 import torch
-import lightning.pytorch as pl
 
-from torchood.models.bilang_module import BiLangLitModule
+import lightning.pytorch as pl
+from torchood.configs.bilang_config import get_config
 from torchood.data.opus_datamodule import OpusBooksDataModule
+from torchood.models.bilang_module import BiLangLitModule
 ```
 
 ______________________________________________________________________
@@ -103,14 +105,26 @@ Set up your dataset and configure your model:
 📄 Refer to the [sample configuration file for bilang](../torchood/configs/bilang_config.py) for hyperparameters and settings, and adjust as necessary.
 
 ```python
-from torchood.configs.bilang_config import get_config
-
 config = get_config()
-config["batch_size"] = 32  # Update based on your GPU capacity
+config.update({
+  "project_name" : "Transformers-BiLang", # Wandb project name
+  "run_name" : "dp+ps+ocp3phase", # wandb run name
+  "batch_size" : 32,
+  "lang_src" : "en",
+  "lang_tgt" : "fr",
+  "seq_len" : 160,
+  "num_epochs" : 10,
+  "lr": 1e-3
+})
+```
 
-datamodule = OpusBooksDataModule(config, pin_memory=True)
+```python
+datamodule = OpusBooksDataModule(config, 8, True)
+```
+
+```python
 datamodule.prepare_data()
-datamodule.setup()
+datamodule.setup("")
 ```
 
 ______________________________________________________________________
@@ -122,26 +136,26 @@ Start training your model using PyTorch Lightning:
 1. **Standard Training Setup**:
 
 ```python
+model = BiLangLitModule(config["lr"], config, datamodule.tokenizer_src, datamodule.tokenizer_tgt, parameter_sharing=True)
+
+```
+
+```python
 from lightning.pytorch.callbacks import (
     LearningRateMonitor,
     RichProgressBar,
 )
 from lightning.pytorch.loggers import WandbLogger
 
-model = BiLangLitModule(learning_rate=config["lr"],
-                        config=config,
-                        tokenizer_src=datamodule.tokenizer_src,
-                        tokenizer_tgt=datamodule.tokenizer_tgt)
 
-callbacks = [
-    RichProgressBar(leave=True),
-    LearningRateMonitor(logging_interval="step"),
-]
-
-# Optional: Logging with Weights & Biases
-logger = WandbLogger(project="Transformers-BiLang")
-
-trainer = pl.Trainer(callbacks=callbacks, max_epochs=10, accelerator="gpu")
+callbacks = [LearningRateMonitor(logging_interval="step")]
+logger = WandbLogger(project=config["project_name"], name=config["run_name"])
+trainer = pl.Trainer(
+    callbacks=callbacks,
+    logger=logger,
+    max_epochs=config["num_epochs"],
+    accelerator = "gpu",
+)
 trainer.fit(model=model, datamodule=datamodule)
 ```
 
@@ -149,7 +163,7 @@ ______________________________________________________________________
 
 ## Observing Trained Model Results
 
-To delve into a detailed performance analysis and visualization of the trained model, visit [Weights & Biases](https://wandb.ai/anantgupta129/Transformers-BiLang/workspace?workspace=user-anantgupta129).
+To delve into a detailed performance analysis and visualization of the trained model, visit [Weights & Biases](https://wandb.ai/anantgupta129/Transformers-BiLang/reports/Transformers-Bi-Language-Model-on-Opus-Books-Dataset--Vmlldzo1MzQyNDU1).
 
 ______________________________________________________________________
 

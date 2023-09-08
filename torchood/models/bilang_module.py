@@ -3,9 +3,7 @@ from typing import Any, List, Optional, Union
 import torch
 import torch.nn as nn
 from lightning.pytorch import LightningModule
-from lightning.pytorch import loggers as pl_loggers
 from lightning.pytorch.utilities.types import STEP_OUTPUT
-from torch.optim.lr_scheduler import LambdaLR
 from torchmetrics import BLEUScore, CharErrorRate, WordErrorRate
 
 from torchood.data.components.opus_books import causal_mask
@@ -122,20 +120,20 @@ class BiLangLitModule(LightningModule):
 
     def configure_optimizers(self) -> Any:
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate, eps=1e-9)
-        # num_epochs = self.trainer.max_epochs
-        # scheduler = torch.optim.lr_scheduler.OneCycleLR(
-        #     optimizer,
-        #     max_lr=self.learning_rate,
-        #     total_steps=self.trainer.estimated_stepping_batches,
-        #     epochs=num_epochs,
-        #     pct_start=5 / num_epochs,
-        #     div_factor=100,
-        #     three_phase=False,
-        #     final_div_factor=100,
-        #     anneal_strategy="linear",
-        # )
-        # lr_scheduler = {"scheduler": scheduler, "interval": "step"}
-        return [optimizer]
+        num_epochs = self.trainer.max_epochs
+        scheduler = torch.optim.lr_scheduler.OneCycleLR(
+            optimizer,
+            max_lr=self.learning_rate,
+            total_steps=self.trainer.estimated_stepping_batches,
+            epochs=num_epochs,
+            pct_start=0.25,
+            div_factor=10,
+            three_phase=True,
+            final_div_factor=10,
+            anneal_strategy="linear",
+        )
+        lr_scheduler = {"scheduler": scheduler, "interval": "step"}
+        return [optimizer], [lr_scheduler]
 
     def greedy_decode(self, source, source_mask, max_len: int, device: str):
         sos_idx = self.tokenizer_tgt.token_to_id("[SOS]")

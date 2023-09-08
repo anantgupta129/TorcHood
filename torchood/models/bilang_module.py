@@ -19,12 +19,14 @@ class BiLangLitModule(LightningModule):
         tokenizer_src: Any,
         tokenizer_tgt: Any,
         parameter_sharing: bool = False,
+        optimizer_type: str = "adamw",
     ) -> None:
         super().__init__()
 
         self.learning_rate = learning_rate
         self.tokenizer_src = tokenizer_src
         self.tokenizer_tgt = tokenizer_tgt
+        self.optimizer_type = optimizer_type
 
         self.seq_len = config["seq_len"]
         self.src_vocab_size = tokenizer_src.get_vocab_size()
@@ -119,7 +121,11 @@ class BiLangLitModule(LightningModule):
         self.log("val/bleu", bleu, prog_bar=True)
 
     def configure_optimizers(self) -> Any:
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate, eps=1e-9)
+        if self.optimizer_type == "adam":
+            optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate, eps=1e-9)
+        else:
+            optimizer = torch.optim.AdamW(self.parameters(), lr=self.learning_rate, eps=1e-9)
+
         num_epochs = self.trainer.max_epochs
         scheduler = torch.optim.lr_scheduler.OneCycleLR(
             optimizer,

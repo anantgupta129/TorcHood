@@ -428,6 +428,8 @@ def build_transformer(
         )
         decoder_blocks.append(decoder_block)
 
+    # using cycle parameter sharing
+    # https://www.kaggle.com/code/rhtsingh/speeding-up-transformer-w-optimization-strategies, https://arxiv.org/abs/2104.06022
     if parameter_sharing:
         encoder_blocks = encoder_blocks + encoder_blocks[::-1]
         decoder_blocks = decoder_blocks + decoder_blocks[::-1]

@@ -35,14 +35,6 @@ The pad token, typically representing no meaningful word, needs to be handled ca
     <img src="../images/dynamic_padding.png" alt="centered image" />
 </p>
 
-To further enhance efficiency, we strive to create batches with sequences of similar lengths. This approach helps us avoid situations where most sequences in a mini-batch are short, requiring the addition of numerous pad tokens to each of them due to the presence of a single very long sequence.
-
-By implementing dynamic padding and optimizing batch generation, we ensure that Transformer models can efficiently handle real-world NLP datasets with varying sequence lengths, leading to more effective and resource-efficient NLP applications.
-
-<p align="center">
-    <img src="../images/uniform_length_batching.png" alt="centered image" />
-</p>
-
 # [Parameter Sharing](../torchood/models/components/bilang_transformer.py)
 
 [REFERENCE](https://arxiv.org/pdf/2104.06022.pdf)

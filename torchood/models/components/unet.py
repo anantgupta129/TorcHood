@@ -95,9 +95,9 @@ class ExpandingBlock(nn.Module):
         x = self.upsample(x)
         # Resize x to match the spatial dimensions of skip tensor
         if x.shape[2] != skip.shape[2]:
-            print("did - ", x.shape, skip.shape)
             x = F.resize(x, size=skip.shape[2:])
         x = torch.cat((x, skip), dim=1)
+
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu1(x)
@@ -158,7 +158,7 @@ class UNet(nn.Module):
 
 #     # Creating a U-Net model
 #     model = UNet(3, 10, strided_conv=True)
-#     input_size = (1, 3, 256, 256)
+#     input_size = (1, 3, 572, 572)
 #     x = torch.randn(*input_size)
 
 #     out = model(x)  # dry run

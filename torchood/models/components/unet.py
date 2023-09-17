@@ -12,7 +12,8 @@ from typing import Tuple
 
 import torch
 import torch.nn as nn
-import torchvision.transforms.functional as F
+import torch.nn.functional as F
+import torchvision.transforms.functional as TF
 
 
 class ContractingBlock(nn.Module):
@@ -111,7 +112,7 @@ class ExpandingBlock(nn.Module):
         # Resize x to match the spatial dimensions of skip tensor
         if x.shape[2] != skip.shape[2]:
             print(x.shape, skip.shape)
-            x = F.resize(x, size=skip.shape[2:])
+            x = TF.resize(x, size=skip.shape[2:])
         x = torch.cat((x, skip), dim=1)
 
         x = self.conv1(x)
@@ -187,6 +188,38 @@ class UNet(nn.Module):
         # Final convolution layer
         x = self.final_conv(x)
         return x
+
+
+class DiceLoss(nn.Module):
+    def __init__(self, eps=1e-7):
+        """Initializes the Dice Loss module.
+
+        Args:
+        - eps (float, optional): Small value to avoid division by zero. Defaults to 1e-7.
+        """
+        super().__init__()
+        self.eps = eps
+
+    def forward(self, logits: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        """Computes the Dice Loss between predicted logits and true labels.
+
+        Args:
+        - logits (torch.Tensor): Predicted logits from the model. Shape (batch_size, classes, height, width).
+        - target (torch.Tensor): Ground truth labels. Shape (batch_size, classes, height, width).
+
+        Returns:
+        - torch.Tensor: Computed Dice Loss.
+        """
+        # flatten predictions and targets
+        logits = logits.view(-1)
+        target = target.view(-1)
+
+        intersection = (logits * target).sum()
+        union = logits.sum() + target.sum()
+
+        dice = (2.0 * intersection + self.eps) / (union + self.eps)
+
+        return 1 - dice
 
 
 # if __name__ == "__main__":

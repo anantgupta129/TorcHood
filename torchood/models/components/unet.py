@@ -77,10 +77,10 @@ class ExpandingBlock(nn.Module):
         conv1, conv2 (torch.nn.Conv2d): Convolutional layers.
         bn1, bn2 (torch.nn.BatchNorm2d): Batch normalization layers.
         relu1, relu2 (torch.nn.ReLU): ReLU activation layers.
-        upsample (torch.nn.ConvTranspose2d): Upsampling layer.
+        upsample (torch.nn.ConvTranspose2d) | (torch.nn.Upsample): Upsampling layer.
     """
 
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels: int, out_channels: int, upsample_mode: str = "transpose"):
         super().__init__()
 
         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1, bias=False)
@@ -92,10 +92,17 @@ class ExpandingBlock(nn.Module):
         self.relu2 = nn.ReLU(inplace=True)
 
         # Upsampling layer to double the spatial dimensions
-        self.upsample = nn.ConvTranspose2d(
-            in_channels, out_channels, kernel_size=2, stride=2, bias=False
-        )
-        # nn.Upsample()
+        if upsample_mode == "transpose":
+            self.upsample = nn.ConvTranspose2d(
+                in_channels, out_channels, kernel_size=2, stride=2, bias=False
+            )
+        elif upsample_mode == "upsample":
+            self.upsample = nn.Sequential(
+                nn.Upsample(scale_factor=2, mode="bilinear"),
+                nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=False),
+            )
+        else:
+            raise ValueError("Upsample mode must be 'transpose' or 'upsample'.")
 
     def forward(self, x: torch.Tensor, skip: torch.Tensor) -> torch.Tensor:
         """Passes the input tensor through the block layers and concatenates with the skip
@@ -103,6 +110,7 @@ class ExpandingBlock(nn.Module):
         x = self.upsample(x)
         # Resize x to match the spatial dimensions of skip tensor
         if x.shape[2] != skip.shape[2]:
+            print(x.shape, skip.shape)
             x = F.resize(x, size=skip.shape[2:])
         x = torch.cat((x, skip), dim=1)
 
@@ -122,7 +130,27 @@ class UNet(nn.Module):
     contracting path captures context, and the expansive path enables precise localization.
     """
 
-    def __init__(self, in_channels: int, out_channels: int, strided_conv: bool = False):
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        strided_conv: bool = False,
+        upsample_mode: str = "transpose",
+    ):
+        """Initializes the U-Net architecture.
+
+        Args:
+        - in_channels (int): Number of input channels to the U-Net. Typically 3 for RGB images.
+        - out_channels (int): Number of output channels from the U-Net. This is usually the number
+                              of classes for segmentation tasks.
+        - strided_conv (bool, optional): If True, use strided convolution for downsampling instead
+                                         of max pooling. Defaults to False.
+        - upsample_mode (str, optional): Mode of upsampling: "transpose" for transposed convolution
+                                         and "upsample" for bilinear upsampling. Defaults to "transpose".
+
+        Raises:
+        - ValueError: If upsample_mode is neither 'transpose' nor 'upsample'.
+        """
         super().__init__()
 
         # Contracting Path (Encoder)
@@ -133,10 +161,10 @@ class UNet(nn.Module):
         self.contract5 = ContractingBlock(512, 1024)
 
         # Expanding Path (Decoder)
-        self.expand1 = ExpandingBlock(1024, 512)
-        self.expand2 = ExpandingBlock(512, 256)
-        self.expand3 = ExpandingBlock(256, 128)
-        self.expand4 = ExpandingBlock(128, 64)
+        self.expand1 = ExpandingBlock(1024, 512, upsample_mode)
+        self.expand2 = ExpandingBlock(512, 256, upsample_mode)
+        self.expand3 = ExpandingBlock(256, 128, upsample_mode)
+        self.expand4 = ExpandingBlock(128, 64, upsample_mode)
 
         # Final convolution to map to the desired number of classes
         self.final_conv = nn.Conv2d(64, out_channels, kernel_size=1, bias=False)
@@ -165,8 +193,9 @@ class UNet(nn.Module):
 #     from torchinfo import summary
 
 #     # Creating a U-Net model
-#     model = UNet(3, 10, strided_conv=True)
-#     input_size = (1, 3, 572, 572)
+#     # model = UNet(3, 10, strided_conv=True)
+#     model = UNet(3, 10, strided_conv=True, upsample_mode="upsample")
+#     input_size = (1, 3, 256, 256)
 #     x = torch.randn(*input_size)
 
 #     out = model(x)  # dry run

@@ -8,6 +8,7 @@ Attributes:
     ExpandingBlock: A class that represents the expanding (upsampling) layers of the U-Net.
     UNet: A class that represents the U-Net architecture.
 """
+from typing import Tuple
 
 import torch
 import torch.nn as nn
@@ -49,15 +50,21 @@ class ContractingBlock(nn.Module):
         self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2)
         self.strided_conv = strided_conv
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Passes the input tensor through the block layers."""
+    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        # Pass through layer 1
         x = self.layer1(x)
+
         if self.strided_conv:
+            # If strided conv is used, save the input tensor as the skip connection
             skip = x
+            # Pass through layer 2
             x = self.layer2(x)
         else:
+            # Pass through layer 2
             x = self.layer2(x)
+            # Save the output tensor as the skip connection
             skip = x
+            # Perform max pooling
             x = self.maxpool(x)
 
         return x, skip
@@ -88,6 +95,7 @@ class ExpandingBlock(nn.Module):
         self.upsample = nn.ConvTranspose2d(
             in_channels, out_channels, kernel_size=2, stride=2, bias=False
         )
+        # nn.Upsample()
 
     def forward(self, x: torch.Tensor, skip: torch.Tensor) -> torch.Tensor:
         """Passes the input tensor through the block layers and concatenates with the skip

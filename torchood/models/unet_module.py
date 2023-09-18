@@ -1,5 +1,6 @@
 from typing import Any, Tuple
 
+import cv2
 import torch
 import torch.nn as nn
 from lightning.pytorch import LightningModule
@@ -9,7 +10,7 @@ from lightning.pytorch.utilities.types import STEP_OUTPUT
 from .components.unet import DiceLoss, UNet
 
 
-class BiLangLitModule(LightningModule):
+class UnetLitModule(LightningModule):
     def __init__(
         self,
         learning_rate: float,
@@ -26,10 +27,10 @@ class BiLangLitModule(LightningModule):
 
         if criterion_type == "dice":
             self.criterion = DiceLoss()
-        elif criterion_type == "bce":
-            self.criterion = nn.BCEWithLogitsLoss()
+        elif criterion_type == "ce":
+            self.criterion = nn.CrossEntropyLoss()
         else:
-            raise ValueError(f"Unknown criterion type: {criterion_type} - must be 'dice' or 'bce'")
+            raise ValueError(f"Unknown criterion type: {criterion_type} - must be 'dice' or 'ce'")
 
         self.train_loss = []
         self.val_loss = []
@@ -65,6 +66,18 @@ class BiLangLitModule(LightningModule):
         mean_loss = sum(self.train_loss) / len(self.train_loss)
         self.log("train/loss", mean_loss, prog_bar=True)
 
+        if self.current_epoch % 5 == 0 and batch_idx in [0, 10]:
+            pred = logits[0].cpu().numpy()
+            y = targets[0].cpu().numpy()
+            x = batch[0][0].permute(1, 2, 0).detach().cpu().numpy()
+
+            x = add_title(x, "Input")
+            y = add_title(y, "Ground Truth")
+            pred = add_title(pred, "Pred Mask")
+
+            img = cv2.hconcat([x, y, pred])
+            cv2.imwrite(f"predictions_{self.current_epoch}_{batch_idx}.png", img)
+
         return loss
 
     def on_validation_epoch_end(self) -> None:
@@ -86,3 +99,12 @@ class BiLangLitModule(LightningModule):
         )
         lr_scheduler = {"scheduler": scheduler, "interval": "step"}
         return [optimizer], [lr_scheduler]
+
+
+def add_title(img, title):
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    color = (0, 0, 0)
+    thickness = 2
+    scale = 0.5
+    cv2.putText(img, title, (10, 30), font, scale, color, thickness, cv2.LINE_AA)
+    return img

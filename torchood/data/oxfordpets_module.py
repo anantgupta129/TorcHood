@@ -1,3 +1,6 @@
+import glob
+import os
+import random
 from typing import Optional, Union
 
 import albumentations as A
@@ -35,11 +38,26 @@ class OxfordIiitPetsDataModule(LightningDataModule):
     def setup(self, stage=None) -> None:
         # load
         if not self.data_train and not self.data_train:
+            images_list = []
+            for ext in [".jpg", ".jpeg", ".png"]:  # filtering images
+                files = glob.glob(f"{self.hparams.image_dir}/*{ext}")
+                images_list += [os.path.basename(f) for f in files]
+
+            random.shuffle(images_list)
+            train_images = images_list[: int(len(images_list) * 0.8)]
+            val_images = images_list[int(len(images_list) * 0.8) :]
+
             self.data_train = OxfordIiitPets(
-                self.hparams.image_dir, self.hparams.mask_dir, self.hparams.train_transforms
+                self.hparams.image_dir,
+                train_images,
+                self.hparams.mask_dir,
+                self.hparams.train_transforms,
             )
             self.data_val = OxfordIiitPets(
-                self.hparams.image_dir, self.hparams.mask_dir, self.hparams.val_transforms
+                self.hparams.image_dir,
+                val_images,
+                self.hparams.mask_dir,
+                self.hparams.val_transforms,
             )
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:

@@ -2,7 +2,7 @@
 """
 
 import os
-from typing import Tuple, Union
+from typing import List, Tuple, Union
 
 import albumentations as A
 import numpy as np
@@ -53,18 +53,24 @@ class OxfordIiitPets(Dataset):
 
     Args:
     - image_dir (str): Path to the directory containing images.
+    - images_list (List[str]): List of paths to the images.
     - mask_dir (str): Path to the directory containing masks.
     - transforms (Union[A.Compose, None]): Transformations to apply on the images and masks.
     """
 
-    def __init__(self, image_dir: str, mask_dir: str, transforms: Union[A.Compose, None]):
+    def __init__(
+        self,
+        image_dir: str,
+        images_list: List[str],
+        mask_dir: str,
+        transforms: Union[A.Compose, None] = None,
+    ):
         self.image_dir = image_dir
-        self.images_list = os.listdir(image_dir)
+        self.images_list = images_list
         self.mask_dir = mask_dir
         self.transforms = transforms
 
     def __len__(self):
-        """Returns the total number of images."""
         return len(self.images_list)
 
     def __getitem__(self, idx) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -87,3 +93,36 @@ class OxfordIiitPets(Dataset):
             mask = transformed["mask"]
 
         return image, mask
+
+
+# if __name__=="__main__":
+#     import glob
+
+#     import matplotlib.pyplot as plt
+#     from torch.utils.data import DataLoader
+
+#     image_dir = "sample_dataset/oxford_iiit_pets/images"
+#     mask_dir = "sample_dataset/oxford_iiit_pets/annotations/trimaps"
+
+#     images_list = []
+#     for ext in [".jpg", ".jpeg", ".png"]: # filtering images
+#         files = glob.glob(f"{image_dir}/*{ext}")
+#         images_list += [os.path.basename(f) for f in files]
+
+#     dset = OxfordIiitPets(
+#         mask_dir=mask_dir,
+#         image_dir=image_dir,
+#         images_list=images_list,
+#         transforms=make_transform(image_set="val"),
+#     )
+
+#     loader = DataLoader(dset, batch_size=1)
+#     for x, y in loader:
+#         print(x.shape, y.shape)
+#         plt.subplot(1, 2, 1)
+#         plt.imshow(x[0].permute(1, 2, 0))
+
+#         plt.subplot(1, 2, 2)
+#         plt.imshow(y[0])
+
+#         plt.show()

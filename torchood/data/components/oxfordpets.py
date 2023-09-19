@@ -87,8 +87,14 @@ class OxfordIiitPets(Dataset):
 
         image = Image.open(ip).convert("RGB")
         mask = Image.open(mp)
+
+        mask = np.array(mask)
+        mask[mask == 3] = 0  # background
+        mask[mask == 2] = 2  # border
+        mask[mask == 1] = 1  # pet
+
         if self.transforms:
-            transformed = self.transforms(image=np.array(image), mask=np.array(mask))
+            transformed = self.transforms(image=np.array(image), mask=mask)
             image = transformed["image"]
             mask = transformed["mask"]
 
@@ -104,6 +110,8 @@ class OxfordIiitPets(Dataset):
 #     image_dir = "sample_dataset/oxford_iiit_pets/images"
 #     mask_dir = "sample_dataset/oxford_iiit_pets/annotations/trimaps"
 
+#     image_dir = r"C:\Users\anant\Downloads\images.tar\images"
+#     mask_dir = r"C:\Users\anant\Downloads\oxford_iiit_pets\annotations.tar\annotations\trimaps"
 #     images_list = []
 #     for ext in [".jpg", ".jpeg", ".png"]: # filtering images
 #         files = glob.glob(f"{image_dir}/*{ext}")

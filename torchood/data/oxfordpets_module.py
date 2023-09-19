@@ -51,13 +51,13 @@ class OxfordIiitPetsDataModule(LightningDataModule):
                 self.hparams.image_dir,
                 train_images,
                 self.hparams.mask_dir,
-                self.hparams.train_transforms,
+                self.train_transforms,
             )
             self.data_val = OxfordIiitPets(
                 self.hparams.image_dir,
                 val_images,
                 self.hparams.mask_dir,
-                self.hparams.val_transforms,
+                self.val_transforms,
             )
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:

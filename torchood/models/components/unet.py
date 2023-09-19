@@ -205,21 +205,31 @@ class DiceLoss(nn.Module):
 
         Args:
         - logits (torch.Tensor): Predicted logits from the model. Shape (batch_size, classes, height, width).
-        - target (torch.Tensor): Ground truth labels. Shape (batch_size, classes, height, width).
+        - target (torch.Tensor): Ground truth labels. Shape (batch_size, height, width).
 
         Returns:
         - torch.Tensor: Computed Dice Loss.
         """
-        logits = torch.sigmoid(logits)
-        # flatten predictions and targets
-        logits = logits.view(-1)
-        target = target.view(-1)
 
-        intersection = (logits * target).sum()
-        union = logits.sum() + target.sum()
+        num_classes = logits.shape[1]
+        # Apply sigmoid to logits
+        logits = torch.sigmoid(logits)
+
+        # Calculate Dice Loss for each class and then average
+        dice_loss = 0.0
+        for i in range(num_classes):
+            dice_loss += self._dice_loss_per_channel(logits[:, i], (target == i).float())
+
+        return dice_loss / num_classes
+
+    def _dice_loss_per_channel(self, logits: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        logits_flat = logits.view(-1)
+        target_flat = target.view(-1)
+
+        intersection = (logits_flat * target_flat).sum()
+        union = logits_flat.sum() + target_flat.sum()
 
         dice = (2.0 * intersection + self.eps) / (union + self.eps)
-
         return 1 - dice
 
 

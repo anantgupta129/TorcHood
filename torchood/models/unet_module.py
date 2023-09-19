@@ -62,21 +62,9 @@ class UNetLitModule(LightningModule):
         loss, logits, targets = self._step(batch)
 
         # update and log metrics
-        self.train_loss.append(loss)
-        mean_loss = sum(self.train_loss) / len(self.train_loss)
-        self.log("train/loss", mean_loss, prog_bar=True)
-
-        if self.current_epoch % 5 == 0 and batch_idx in [0, 10]:
-            pred = logits[0].cpu().numpy()
-            y = targets[0].cpu().numpy()
-            x = batch[0][0].permute(1, 2, 0).detach().cpu().numpy()
-
-            x = add_title(x, "Input")
-            y = add_title(y, "Ground Truth")
-            pred = add_title(pred, "Pred Mask")
-
-            img = cv2.hconcat([x, y, pred])
-            cv2.imwrite(f"predictions_{self.current_epoch}_{batch_idx}.png", img)
+        self.val_loss.append(loss)
+        mean_loss = sum(self.val_loss) / len(self.val_loss)
+        self.log("val/loss", mean_loss, prog_bar=True)
 
         return loss
 

@@ -10,7 +10,7 @@ from lightning.pytorch.utilities.types import STEP_OUTPUT
 from .components.unet import DiceLoss, UNet
 
 
-class UnetLitModule(LightningModule):
+class UNetLitModule(LightningModule):
     def __init__(
         self,
         learning_rate: float,

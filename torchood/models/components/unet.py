@@ -210,6 +210,7 @@ class DiceLoss(nn.Module):
         Returns:
         - torch.Tensor: Computed Dice Loss.
         """
+        logits = torch.sigmoid(logits)
         # flatten predictions and targets
         logits = logits.view(-1)
         target = target.view(-1)

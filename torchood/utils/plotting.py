@@ -5,12 +5,14 @@ from typing import Any, List
 
 import albumentations as A
 import cv2
-import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+from matplotlib.pyplot import figure
 from torch.utils.data import DataLoader
+from torchvision.utils import make_grid
 
 from ..models.components.yolo.utils import cells_to_bboxes, non_max_suppression
 
@@ -166,18 +168,9 @@ def plot_couple_examples(model, batch, thresh, iou_thresh, anchors, class_labels
     return plotted_images
 
 
-def plot_vae_examples(train_loader, vae, num_of_imges=25):
-    import torch
-    import torch.nn.functional as F
-
+def plot_vae_examples(train_loader, vae, mean, std, num_of_imges=25):
     device = "cuda"
     output_images = []
-    import matplotlib.pyplot as plt
-    import numpy as np
-    from matplotlib.pyplot import figure, imshow
-    from pl_bolts.transforms.dataset_normalizations import cifar10_normalization
-    from torchvision.utils import make_grid
-
     figure(figsize=(8, 3), dpi=300)
     # Initialize a DataLoader iterator
     data_iter = iter(train_loader)
@@ -211,8 +204,7 @@ def plot_vae_examples(train_loader, vae, num_of_imges=25):
             pred = vae.decoder(z.to(vae.device), y.to(vae.device)).to(device)
 
         # UNDO DATA NORMALIZATION
-        normalize = cifar10_normalization()
-        mean, std = np.array(normalize.mean), np.array(normalize.std)
+        mean, std = np.array(mean), np.array(std)
         img = make_grid(pred).permute(1, 2, 0).cpu().numpy() * std + mean
         output_images.append(img)
 

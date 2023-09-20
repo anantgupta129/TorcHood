@@ -266,8 +266,9 @@ def iou_per_class(output: torch.Tensor, target: torch.Tensor, num_classes: int) 
 
     iou_list = []
     for cls in range(num_classes):
-        intersection = (predicted == cls & target == cls).sum().float().item()
+        intersection = ((predicted == cls) & (target == cls)).sum().float().item()
         union = ((predicted == cls) | (target == cls)).sum().float().item()
+
         if union == 0:
             iou_list.append(np.nan)
         else:

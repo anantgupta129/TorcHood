@@ -63,7 +63,7 @@ class UNetLitModule(LightningModule):
         self.log("train/pixel_accuracy", px_acc, prog_bar=True)
 
         self.train_mIoU.append(mean_iou(logits, targets))
-        miou = sum(self.train_mIoU)
+        miou = sum(self.train_mIoU) / len(self.train_mIoU)
         self.log("train/meanIoU", miou, prog_bar=True)
 
         return loss
@@ -86,7 +86,7 @@ class UNetLitModule(LightningModule):
         self.log("val/pixel_accuracy", px_acc, prog_bar=True)
 
         self.val_mIoU.append(mean_iou(logits, targets))
-        miou = sum(self.val_mIoU)
+        miou = sum(self.val_mIoU) / len(self.val_mIoU)
         self.log("val/meanIoU", miou, prog_bar=True)
 
         return loss

@@ -223,8 +223,8 @@ class DiceLoss(nn.Module):
         return dice_loss / num_classes
 
     def _dice_loss_per_channel(self, logits: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
-        logits_flat = logits.view(-1)
-        target_flat = target.view(-1)
+        logits_flat = logits.contiguous().view(-1)
+        target_flat = target.contiguous().view(-1)
 
         intersection = (logits_flat * target_flat).sum()
         union = logits_flat.sum() + target_flat.sum()

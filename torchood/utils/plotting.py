@@ -36,7 +36,7 @@ def evaluate_model(model: nn.Module, loader: DataLoader, device: torch.device):
         k = np.random.randint(0, len(loader.dataset))  # random points from test dataset
 
         img, label = loader.dataset[k]  # separate the image and label
-        img = img.unsqueeze(0)  # adding one dimention
+        img = img.unsqueeze(0)  # adding one dimension
         pred = model(img.to(device))  # Prediction
 
         figure.add_subplot(rows, cols, i)  # making the figure
@@ -164,3 +164,61 @@ def plot_couple_examples(model, batch, thresh, iou_thresh, anchors, class_labels
         plotted_images.append(image)
 
     return plotted_images
+
+
+def plot_vae_examples(train_loader, vae):
+    import torch
+    import torch.nn.functional as F
+
+    device = "cuda"
+    output_images = []
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from matplotlib.pyplot import figure, imshow
+    from pl_bolts.transforms.dataset_normalizations import cifar10_normalization
+    from torchvision.utils import make_grid
+
+    figure(figsize=(8, 3), dpi=300)
+    # Iterate through the DataLoader to access the first 16 images
+    for _, (images, labels) in enumerate(train_loader):
+        # Z COMES FROM NORMAL(0, 1)
+
+        # p = torch.distributions.Normal(torch.zeros_like(mu), torch.ones_like(std))
+        z = images
+        y = labels
+        y = F.one_hot(y, num_classes=10)
+        # SAMPLE IMAGES
+        x_encoded = vae.encoder(z.to(device))
+        # x_encoded = torch.cat((x_encoded, one_hot_labels.to('cuda')), dim=1) #get OHE for label features
+        mu, log_var = vae.fc_mu(x_encoded), vae.fc_var(x_encoded)
+
+        # sample z from q
+        std = torch.exp(log_var / 2)
+        q = torch.distributions.Normal(mu, std)
+        z = q.rsample()
+        # print(z.shape,y.shape)
+        with torch.no_grad():
+            pred = vae.decoder(z.to(vae.device), y.to(vae.device)).to(device)
+
+        # UNDO DATA NORMALIZATION
+        normalize = cifar10_normalization()
+        mean, std = np.array(normalize.mean), np.array(normalize.std)
+        img = make_grid(pred).permute(1, 2, 0).cpu().numpy() * std + mean
+        output_images.append(img)
+
+        # Check if you have collected 25 images, and if so, break the loop
+        if len(output_images) >= 25:
+            break
+
+    # Create a subplot grid for displaying the collected images
+    fig, axes = plt.subplots(5, 5, figsize=(10, 10))
+
+    # Plot each image in the grid
+    for i in range(25):
+        ax = axes[i // 5, i % 5]
+        ax.imshow(output_images[i])
+        ax.axis("off")
+
+    # Show the plot
+    plt.show()
+    return output_images

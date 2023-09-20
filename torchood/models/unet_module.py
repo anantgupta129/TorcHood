@@ -23,6 +23,7 @@ class UNetLitModule(LightningModule):
         super().__init__()
 
         self.learning_rate = learning_rate
+        self.nc = out_channels
         self.net = UNet(in_channels, out_channels, strided_conv, upsample_mode)
 
         self.criterion_type = criterion_type
@@ -62,7 +63,7 @@ class UNetLitModule(LightningModule):
         px_acc = sum(self.train_pixel_acc) / len(self.train_pixel_acc)
         self.log("train/pixel_accuracy", px_acc, prog_bar=True)
 
-        self.train_mIoU.append(mean_iou(logits, targets))
+        self.train_mIoU.append(mean_iou(logits, targets, self.nc))
         miou = sum(self.train_mIoU) / len(self.train_mIoU)
         self.log("train/meanIoU", miou, prog_bar=True)
 
@@ -85,7 +86,7 @@ class UNetLitModule(LightningModule):
         px_acc = sum(self.val_pixel_acc) / len(self.val_pixel_acc)
         self.log("val/pixel_accuracy", px_acc, prog_bar=True)
 
-        self.val_mIoU.append(mean_iou(logits, targets))
+        self.val_mIoU.append(mean_iou(logits, targets, self.nc))
         miou = sum(self.val_mIoU) / len(self.val_mIoU)
         self.log("val/meanIoU", miou, prog_bar=True)
 

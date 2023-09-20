@@ -7,7 +7,7 @@ from lightning.pytorch import LightningModule
 from lightning.pytorch import loggers as pl_loggers
 from lightning.pytorch.utilities.types import STEP_OUTPUT
 
-from .components.unet import DiceLoss, UNet
+from .components.unet import DiceLoss, UNet, mean_iou, pixel_accuracy
 
 
 class UNetLitModule(LightningModule):
@@ -25,6 +25,7 @@ class UNetLitModule(LightningModule):
         self.learning_rate = learning_rate
         self.net = UNet(in_channels, out_channels, strided_conv, upsample_mode)
 
+        self.criterion_type = criterion_type
         if criterion_type == "dice":
             self.criterion = DiceLoss()
         elif criterion_type == "ce":
@@ -33,7 +34,11 @@ class UNetLitModule(LightningModule):
             raise ValueError(f"Unknown criterion type: {criterion_type} - must be 'dice' or 'ce'")
 
         self.train_loss = []
+        self.train_pixel_acc = []
+        self.train_mIoU = []
         self.val_loss = []
+        self.val_pixel_acc = []
+        self.val_mIoU = []
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.net(x)
@@ -51,12 +56,22 @@ class UNetLitModule(LightningModule):
         # update and log metrics
         self.train_loss.append(loss)
         mean_loss = sum(self.train_loss) / len(self.train_loss)
-        self.log("train/loss", mean_loss, prog_bar=True)
+        self.log(f"train/{self.criterion_type}_loss", mean_loss, prog_bar=True)
+
+        self.train_pixel_acc.append(pixel_accuracy(logits, targets))
+        px_acc = sum(self.train_pixel_acc) / len(self.train_pixel_acc)
+        self.log("train/pixel_accuracy", px_acc, prog_bar=True)
+
+        self.train_mIoU.append(mean_iou(logits, targets))
+        miou = sum(self.train_mIoU)
+        self.log("train/meanIoU", miou, prog_bar=True)
 
         return loss
 
     def on_train_epoch_end(self) -> None:
         self.train_loss = []
+        self.train_pixel_acc = []
+        self.train_mIoU = []
 
     def validation_step(self, batch: Any, batch_idx: int) -> STEP_OUTPUT:
         loss, logits, targets = self._step(batch)
@@ -64,12 +79,22 @@ class UNetLitModule(LightningModule):
         # update and log metrics
         self.val_loss.append(loss)
         mean_loss = sum(self.val_loss) / len(self.val_loss)
-        self.log("val/loss", mean_loss, prog_bar=True)
+        self.log(f"val/{self.criterion_type}_loss", mean_loss, prog_bar=True)
+
+        self.val_pixel_acc.append(pixel_accuracy(logits, targets))
+        px_acc = sum(self.val_pixel_acc) / len(self.val_pixel_acc)
+        self.log("val/pixel_accuracy", px_acc, prog_bar=True)
+
+        self.val_mIoU.append(mean_iou(logits, targets))
+        miou = sum(self.val_mIoU)
+        self.log("val/meanIoU", miou, prog_bar=True)
 
         return loss
 
     def on_validation_epoch_end(self) -> None:
         self.val_loss = []
+        self.val_pixel_acc = []
+        self.val_mIoU = []
 
     def configure_optimizers(self) -> Any:
         optimizer = torch.optim.AdamW(self.parameters(), lr=self.learning_rate, eps=1e-9)

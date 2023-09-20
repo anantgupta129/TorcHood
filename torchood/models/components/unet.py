@@ -8,8 +8,9 @@ Attributes:
     ExpandingBlock: A class that represents the expanding (upsampling) layers of the U-Net.
     UNet: A class that represents the U-Net architecture.
 """
-from typing import Tuple
+from typing import List, Tuple
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -231,6 +232,64 @@ class DiceLoss(nn.Module):
 
         dice = (2.0 * intersection + self.eps) / (union + self.eps)
         return 1 - dice
+
+
+def pixel_accuracy(output: torch.Tensor, target: torch.Tensor) -> float:
+    """Compute the pixel accuracy.
+
+    Args:
+    - output (torch.Tensor): The network's output of shape (batch_size, num_classes, height, width).
+    - target (torch.Tensor): The ground truth labels of shape (batch_size, height, width).
+
+    Returns:
+    - float: Pixel accuracy.
+    """
+    _, predicted = torch.max(output, 1)
+    correct_pixels = (predicted == target).sum().item()
+    total_pixels = torch.numel(target)
+    accuracy = correct_pixels / total_pixels
+    return accuracy
+
+
+def iou_per_class(output: torch.Tensor, target: torch.Tensor, num_classes: int) -> List:
+    """Compute the IoU for each class.
+
+    Args:
+    - output (torch.Tensor): The network's output of shape (batch_size, num_classes, height, width).
+    - target (torch.Tensor): The ground truth labels of shape (batch_size, height, width).
+    - num_classes (int): Number of classes.
+
+    Returns:
+    - list of float: IoU for each class.
+    """
+    _, predicted = torch.max(output, 1)
+
+    iou_list = []
+    for cls in range(num_classes):
+        intersection = (predicted == cls & target == cls).sum().float().item()
+        union = ((predicted == cls) | (target == cls)).sum().float().item()
+        if union == 0:
+            iou_list.append(np.nan)
+        else:
+            iou_list.append(intersection / union)
+    return iou_list
+
+
+def mean_iou(output: torch.Tensor, target: torch.Tensor, num_classes: int) -> float:
+    """Compute the mean IoU.
+
+    Args:
+    - output (torch.Tensor): The network's output of shape (batch_size, num_classes, height, width).
+    - target (torch.Tensor): The ground truth labels of shape (batch_size, height, width).
+    - num_classes (int): Number of classes.
+
+    Returns:
+    - float: Mean IoU across all classes.
+    """
+    iou_list = iou_per_class(output, target, num_classes)
+    valid_iou = [iou for iou in iou_list if not np.isnan(iou)]
+    mIoU = sum(valid_iou) / len(valid_iou)
+    return mIoU
 
 
 # if __name__ == "__main__":

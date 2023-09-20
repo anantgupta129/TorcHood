@@ -178,49 +178,60 @@ def plot_vae_examples(train_loader, vae, mean, std, num_of_imges=25):
     # Loop through the DataLoader to generate and collect the images
     for batch_idx, (images, labels) in enumerate(train_loader):
         # Use the 'next' function to get the labels of the next batch
+        original_label = labels
         try:
             next_batch = next(data_iter)
             labels = next_batch[1]
         except StopIteration:
             # Handle the case where there are no more batches
             labels = None
-        # Z COMES FROM NORMAL(0, 1)
+        if original_label != labels:
+            # Z COMES FROM NORMAL(0, 1)
 
-        # p = torch.distributions.Normal(torch.zeros_like(mu), torch.ones_like(std))
-        z = images
-        y = labels
-        y = F.one_hot(y, num_classes=10)
-        # SAMPLE IMAGES
-        x_encoded = vae.encoder(z.to(device))
-        # x_encoded = torch.cat((x_encoded, one_hot_labels.to('cuda')), dim=1) #get OHE for label features
-        mu, log_var = vae.fc_mu(x_encoded), vae.fc_var(x_encoded)
+            # p = torch.distributions.Normal(torch.zeros_like(mu), torch.ones_like(std))
+            z = images
+            y = labels
+            y = F.one_hot(y, num_classes=10)
+            # SAMPLE IMAGES
+            x_encoded = vae.encoder(z.to(device), y.to(device))
+            # x_encoded = torch.cat((x_encoded, one_hot_labels.to('cuda')), dim=1) #get OHE for label features
+            mu, log_var = vae.fc_mu(x_encoded), vae.fc_var(x_encoded)
 
-        # sample z from q
-        std = torch.exp(log_var / 2)
-        q = torch.distributions.Normal(mu, std)
-        z = q.rsample()
-        # print(z.shape,y.shape)
-        with torch.no_grad():
-            pred = vae.decoder(z.to(vae.device), y.to(vae.device)).to(device)
+            # sample z from q
+            std = torch.exp(log_var / 2)
+            q = torch.distributions.Normal(mu, std)
+            z = q.rsample()
+            # print(z.shape,y.shape)
+            with torch.no_grad():
+                pred = vae.decoder(z.to(vae.device), y.to(vae.device)).to(device)
 
-        # UNDO DATA NORMALIZATION
-        mean, std = np.array(mean), np.array(std)
-        img = make_grid(pred).permute(1, 2, 0).cpu().numpy() * std + mean
-        output_images.append(img)
+            # UNDO DATA NORMALIZATION
+            # normalize = cifar10_normalization()
+            mean, std = np.array(mean), np.array(std)
+            img = make_grid(pred).permute(1, 2, 0).cpu().numpy() * std + mean
+            output_images.append((img, original_label, labels))
 
-        # Check if you have collected 25 images, and if so, break the loop
-        if len(output_images) >= num_of_imges:
-            break
+            # Check if you have collected 25 images, and if so, break the loop
+            if len(output_images) >= num_of_imges:
+                break
 
     # Create a subplot grid for displaying the collected images
-    fig, axes = plt.subplots(5, 5, figsize=(10, 10))
-
-    # Plot each image in the grid
+    fig, axes = plt.subplots(5, 5, figsize=(12, 12))
+    # Adjust the spacing between subplots
+    plt.subplots_adjust(hspace=0.5, wspace=0.5)
+    # Plot each image in the grid and add labels horizontally before the image
     for i in range(num_of_imges):
         ax = axes[i // 5, i % 5]
-        ax.imshow(output_images[i])
-        ax.axis("off")
+        img, original_label, next_labels = output_images[i]
 
+        # Add original label and next label as text before the image
+        label_text = f"Original Label: {original_label.item()} \n"
+        if next_labels is not None:
+            label_text += f"Input Label: {next_labels[0].item()}"
+
+        ax.text(0, -1.0, label_text, fontsize=12)
+
+        ax.imshow(img)
+        ax.axis("off")
     # Show the plot
     plt.show()
-    return output_images

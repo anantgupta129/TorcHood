@@ -3,25 +3,35 @@ from typing import Any, List, Tuple
 import albumentations as A
 import numpy as np
 import torch
+import torchvision.transforms as transforms
 from albumentations.pytorch import ToTensorV2
 from torch.utils.data import Dataset
 
 
-def make_transform(image_set: str) -> A.Compose:
+class MNISTToRGB:
+    def __call__(self, img):
+        img = torch.cat([img, img, img], dim=0)  # Duplicate the single channel into three channels
+        return img
+
+
+def make_transform(visual_auto_encoders: bool) -> A.Compose:
     mean = (0.1307, 0.1307, 0.1307)
     std = (0.3081, 0.3081, 0.3081)
-    if image_set == "train":
-        return A.Compose(
+    # Train data transformations
+    if visual_auto_encoders:
+        return transforms.Compose(
             [
-                A.Normalize(mean, std),
-                ToTensorV2(),
+                transforms.Resize((32, 32)),
+                transforms.ToTensor(),
+                MNISTToRGB(),  # Convert to 3 channels
+                transforms.Normalize((0.1307, 0.1307, 0.1307), (0.3081, 0.3081, 0.3081)),
             ]
         )
     else:
-        return A.Compose(
+        return transforms.Compose(
             [
-                A.Normalize(mean, std),
-                ToTensorV2(),
+                transforms.ToTensor(),
+                transforms.Normalize((0.1307, 0.1307, 0.1307), (0.3081, 0.3081, 0.3081)),
             ]
         )
 

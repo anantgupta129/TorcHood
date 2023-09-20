@@ -156,6 +156,7 @@ class DecoderBottleneck(nn.Module):
         self.conv3 = conv1x1(width, planes * self.expansion)
         self.bn3 = nn.BatchNorm2d(planes * self.expansion)
         self.relu = nn.ReLU(inplace=True)
+
         self.upsample = upsample
         self.scale = scale
 
@@ -190,11 +191,11 @@ class ResNetEncoder(nn.Module):
 
         if self.first_conv:
             self.conv1 = nn.Conv2d(
-                3, self.inplanes, kernel_size=7, stride=2, padding=3, bias=False
+                13, self.inplanes, kernel_size=7, stride=2, padding=3, bias=False
             )
         else:
             self.conv1 = nn.Conv2d(
-                3, self.inplanes, kernel_size=3, stride=1, padding=1, bias=False
+                13, self.inplanes, kernel_size=3, stride=1, padding=1, bias=False
             )
 
         self.bn1 = nn.BatchNorm2d(self.inplanes)
@@ -231,7 +232,11 @@ class ResNetEncoder(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+    def forward(self, x, one_hot_labels):
+        one_hot_labels = (
+            one_hot_labels.unsqueeze(2).unsqueeze(3).expand(-1, -1, x.size(2), x.size(3))
+        )
+        x = torch.cat([x, one_hot_labels], dim=1)
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -244,8 +249,7 @@ class ResNetEncoder(nn.Module):
 
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
-        # = one_hot_labels.unsqueeze(2).unsqueeze(3).expand(-1, -1, x.size(2), x.size(3))
-        # x = torch.cat([x, one_hot_labels], dim=1)
+
         # x = self.label_layer_1(x)
         # x = self.label_layer_2(x)
         # x = self.label_layer_3(x)
@@ -313,10 +317,10 @@ class ResNetDecoder(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+    def forward(self, x, one_hot_labels):
         # one_hot_labels = one_hot_labels.unsqueeze(2).unsqueeze(3).expand(-1, -1, x.size(2), x.size(3))
 
-        # x = torch.cat([x, one_hot_labels], dim=1)
+        x = torch.cat([x, one_hot_labels], dim=1)
 
         x = self.linear(x)
 

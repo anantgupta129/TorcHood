@@ -15,6 +15,7 @@ class MNISTDataModule(LightningDataModule):
         batch_size: int = 512,
         num_workers: int = 0,
         pin_memory: bool = False,
+        visual_auto_encoders=True,
         train_augments: Union[A.Compose, None] = None,
     ):
         super().__init__()
@@ -23,10 +24,8 @@ class MNISTDataModule(LightningDataModule):
         # also ensures init params will be stored in ckpt
         self.save_hyperparameters(logger=False)
 
-        self.train_transforms = (
-            make_transform("train") if train_augments is None else train_augments
-        )
-        self.val_transforms = make_transform("val")
+        self.train_transforms = make_transform(visual_auto_encoders)
+        self.val_transforms = make_transform(visual_auto_encoders)
 
         self.data_train: Optional[Dataset] = None
         self.data_val: Optional[Dataset] = None

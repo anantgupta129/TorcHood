@@ -166,7 +166,7 @@ def plot_couple_examples(model, batch, thresh, iou_thresh, anchors, class_labels
     return plotted_images
 
 
-def plot_vae_examples(train_loader, vae):
+def plot_vae_examples(train_loader, vae, num_of_imges=25):
     import torch
     import torch.nn.functional as F
 
@@ -179,8 +179,18 @@ def plot_vae_examples(train_loader, vae):
     from torchvision.utils import make_grid
 
     figure(figsize=(8, 3), dpi=300)
-    # Iterate through the DataLoader to access the first 16 images
-    for _, (images, labels) in enumerate(train_loader):
+    # Initialize a DataLoader iterator
+    data_iter = iter(train_loader)
+
+    # Loop through the DataLoader to generate and collect the images
+    for batch_idx, (images, labels) in enumerate(train_loader):
+        # Use the 'next' function to get the labels of the next batch
+        try:
+            next_batch = next(data_iter)
+            labels = next_batch[1]
+        except StopIteration:
+            # Handle the case where there are no more batches
+            labels = None
         # Z COMES FROM NORMAL(0, 1)
 
         # p = torch.distributions.Normal(torch.zeros_like(mu), torch.ones_like(std))
@@ -207,14 +217,14 @@ def plot_vae_examples(train_loader, vae):
         output_images.append(img)
 
         # Check if you have collected 25 images, and if so, break the loop
-        if len(output_images) >= 25:
+        if len(output_images) >= num_of_imges:
             break
 
     # Create a subplot grid for displaying the collected images
     fig, axes = plt.subplots(5, 5, figsize=(10, 10))
 
     # Plot each image in the grid
-    for i in range(25):
+    for i in range(num_of_imges):
         ax = axes[i // 5, i % 5]
         ax.imshow(output_images[i])
         ax.axis("off")

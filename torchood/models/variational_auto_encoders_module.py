@@ -1,4 +1,4 @@
-import pytorch_lightning as pl
+import lightning
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -6,10 +6,9 @@ from torch.nn import functional as F
 from .components.variational_auto_encoder import VAENet
 
 
-class VAE(pl.LightningModule):
-    def __init__(self, input_height=32, num_classses=10, learning_rate=1e-4):
+class VAE(lightning.pytorch.LightningModule):
+    def __init__(self, input_height=32, num_classses=10):
         super().__init__()
-        self.learning_rate = learning_rate
         self.net = VAENet()
         self.num_classes = num_classses
         self.input_height = input_height
@@ -18,7 +17,7 @@ class VAE(pl.LightningModule):
     def forward(self, x, y):
         one_hot_labels = F.one_hot(y, num_classes=self.num_classes)
         # encode x to get the mu and variance parameters
-        x_encoded = self.net.encoder(x)
+        x_encoded = self.net.encoder(x, one_hot_labels)
         # x_encoded = torch.cat((x_encoded, one_hot_labels.to('cuda')), dim=1) #get OHE for label features
         x_encoded = torch.cat(
             (x_encoded, one_hot_labels.to("cuda")), dim=1
@@ -31,7 +30,7 @@ class VAE(pl.LightningModule):
         z = q.rsample()
 
         # decode
-        x_hat = self.net.decoder(z)
+        x_hat = self.net.decoder(z, one_hot_labels)
         return x_hat, z, mu, std
 
     def configure_optimizers(self):

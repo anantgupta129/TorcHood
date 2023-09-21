@@ -369,7 +369,7 @@ class VAENet(nn.Module):
         # encoder, decoder
         self.encoder = resnet18_encoder(False, False)
         self.decoder = resnet18_decoder(
-            latent_dim=latent_dim, input_height=input_height, first_conv=False, maxpool1=False
+            latent_dim=latent_dim + 10, input_height=input_height, first_conv=False, maxpool1=False
         )
 
         # distribution parameters

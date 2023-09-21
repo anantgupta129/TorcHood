@@ -3,11 +3,11 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from .components.visual_auto_encoder import VAENet
+from .components.variational_auto_encoder import VAENet
 
 
 class VAE(pl.LightningModule):
-    def __init__(self, enc_out_dim=522, latent_dim=256, input_height=32, num_classses=10):
+    def __init__(self, input_height=32, num_classses=10):
         super().__init__()
 
         self.save_hyperparameters()

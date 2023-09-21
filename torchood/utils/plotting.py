@@ -168,7 +168,7 @@ def plot_couple_examples(model, batch, thresh, iou_thresh, anchors, class_labels
     return plotted_images
 
 
-def plot_vae_examples(train_loader, vae, mean, std, num_of_imges=25):
+def plot_vae_examples(train_loader, vae, mean, std_data, num_of_imges=25):
     device = "cuda"
     output_images = []
     figure(figsize=(8, 3), dpi=300)
@@ -203,12 +203,12 @@ def plot_vae_examples(train_loader, vae, mean, std, num_of_imges=25):
             z = q.rsample()
             # print(z.shape,y.shape)
             with torch.no_grad():
-                pred = vae.decoder(z.to(vae.device), y.to(vae.device)).to(device)
+                pred = vae.decoder(z.to(device), y.to(device)).to(device)
 
             # UNDO DATA NORMALIZATION
             # normalize = cifar10_normalization()
-            mean, std = np.array(mean), np.array(std)
-            img = make_grid(pred).permute(1, 2, 0).cpu().numpy() * std + mean
+            mean, std_data = np.array(mean), np.array(std_data)
+            img = make_grid(pred).permute(1, 2, 0).cpu().numpy() * std_data + mean
             output_images.append((img, original_label, labels))
 
             # Check if you have collected 25 images, and if so, break the loop

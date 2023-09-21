@@ -7,10 +7,9 @@ from .components.variational_auto_encoder import VAENet
 
 
 class VAE(pl.LightningModule):
-    def __init__(self, input_height=32, num_classses=10):
+    def __init__(self, input_height=32, num_classses=10, learning_rate=1e-4):
         super().__init__()
-
-        self.save_hyperparameters()
+        self.learning_rate = learning_rate
         self.net = VAENet()
         self.num_classes = num_classses
         self.input_height = input_height

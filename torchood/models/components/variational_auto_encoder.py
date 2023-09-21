@@ -364,7 +364,7 @@ def resnet50_decoder(latent_dim, input_height, first_conv, maxpool1):
 
 
 class VAENet(pl.LightningModule):
-    def __init__(self, enc_out_dim=512, latent_dim=256, input_height=32):
+    def __init__(self, enc_out_dim=522, latent_dim=256, input_height=32):
         super().__init__()
 
         self.save_hyperparameters()

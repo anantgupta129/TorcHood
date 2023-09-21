@@ -1,3 +1,4 @@
+import pytorch_lightning as pl
 import torch
 from torch import nn
 from torch.nn import functional as F  # noqa: N812
@@ -362,9 +363,11 @@ def resnet50_decoder(latent_dim, input_height, first_conv, maxpool1):
     )
 
 
-class VAENet(nn.Module):
+class VAENet(pl.LightningModule):
     def __init__(self, enc_out_dim=512, latent_dim=256, input_height=32):
         super().__init__()
+
+        self.save_hyperparameters()
 
         # encoder, decoder
         self.encoder = resnet18_encoder(False, False)

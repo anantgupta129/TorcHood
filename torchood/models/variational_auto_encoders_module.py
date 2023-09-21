@@ -18,10 +18,6 @@ class VAE(lightning.pytorch.LightningModule):
         one_hot_labels = F.one_hot(y, num_classes=self.num_classes)
         # encode x to get the mu and variance parameters
         x_encoded = self.net.encoder(x, one_hot_labels)
-        # x_encoded = torch.cat((x_encoded, one_hot_labels.to('cuda')), dim=1) #get OHE for label features
-        x_encoded = torch.cat(
-            (x_encoded, one_hot_labels.to("cuda")), dim=1
-        )  # get OHE for label features
         mu, log_var = self.net.fc_mu(x_encoded), self.net.fc_var(x_encoded)
 
         # sample z from q

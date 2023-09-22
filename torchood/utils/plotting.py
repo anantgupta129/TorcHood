@@ -168,8 +168,10 @@ def plot_couple_examples(model, batch, thresh, iou_thresh, anchors, class_labels
     return plotted_images
 
 
-def plot_vae_examples(train_loader, vae, mean, std_data, num_of_imges=25):
-    device = "cuda"
+def plot_vae_examples(train_loader, test_data, vae, mean, std_data, num_of_imges=25):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    classes = test_data.classes
+    classmaps = {i: j for i, j in enumerate(classes)}
     output_images = []
     figure(figsize=(8, 3), dpi=300)
     # Initialize a DataLoader iterator
@@ -223,14 +225,12 @@ def plot_vae_examples(train_loader, vae, mean, std_data, num_of_imges=25):
     for i in range(num_of_imges):
         ax = axes[i // 5, i % 5]
         img, original_label, next_labels = output_images[i]
-
         # Add original label and next label as text before the image
-        label_text = f"Original Label: {original_label.item()} \n"
+        label_text = f"Original Label: {classmaps[original_label.item()]} \n"
         if next_labels is not None:
-            label_text += f"Input Label: {next_labels[0].item()}"
+            label_text += f"Input Label: {classmaps[next_labels[0].item()]}"
 
-        ax.text(0, -1.0, label_text, fontsize=12)
-
+        ax.text(0, -1.0, label_text, fontsize=8)
         ax.imshow(img)
         ax.axis("off")
     # Show the plot

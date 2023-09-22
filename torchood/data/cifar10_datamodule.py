@@ -4,40 +4,15 @@ import torchvision.transforms as transforms
 from torchvision import datasets
 
 
-class MNISTToRGB:
-    def __call__(self, img):
-        img = torch.cat([img, img, img], dim=0)  # Duplicate the single channel into three channels
-        return img
-
-
 def create_transforms(variational_auto_encoder=True, train_batch_size=512, val_batch_size=1):
     # Train data transformations
     if variational_auto_encoder:
         train_transforms = transforms.Compose(
             [
-                transforms.Resize((32, 32)),
                 transforms.ToTensor(),
-                MNISTToRGB(),  # Convert to 3 channels
-                transforms.Normalize((0.1307, 0.1307, 0.1307), (0.3081, 0.3081, 0.3081)),
-            ]
-        )
-
-        # Test data transformations
-        test_transforms = transforms.Compose(
-            [
-                transforms.Resize((32, 32)),
-                transforms.ToTensor(),
-                MNISTToRGB(),  # Convert to 3 channels
-                transforms.Normalize((0.1407, 0.1407, 0.1407), (0.4081, 0.4081, 0.4081)),
-            ]
-        )
-        return train_transforms, test_transforms
-
-    else:
-        train_transforms = transforms.Compose(
-            [
-                transforms.ToTensor(),
-                transforms.Normalize((0.1307), (0.3081)),
+                transforms.Normalize(
+                    (0.49139968, 0.48215841, 0.44653091), (0.24703223, 0.24348513, 0.26158784)
+                ),
             ]
         )
 
@@ -45,13 +20,15 @@ def create_transforms(variational_auto_encoder=True, train_batch_size=512, val_b
         test_transforms = transforms.Compose(
             [
                 transforms.ToTensor(),
-                transforms.Normalize((0.1407), (0.4081)),
+                transforms.Normalize(
+                    (0.49139968, 0.48215841, 0.44653091), (0.24703223, 0.24348513, 0.26158784)
+                ),
             ]
         )
         return train_transforms, test_transforms
 
 
-class MNISTDataModule(lightning.pytorch.LightningDataModule):
+class CIFAR10DataModule(lightning.pytorch.LightningDataModule):
     def __init__(
         self, dir="../data", variational_auto_encoder=True, train_batch_size=512, val_batch_size=1
     ):
@@ -59,10 +36,10 @@ class MNISTDataModule(lightning.pytorch.LightningDataModule):
         self.train_transform, self.test_transform = create_transforms(
             variational_auto_encoder=variational_auto_encoder
         )
-        self.train_data = datasets.MNIST(
+        self.train_data = datasets.CIFAR10(
             dir, train=True, download=True, transform=self.train_transform
         )
-        self.test_data = datasets.MNIST(
+        self.test_data = datasets.CIFAR10(
             dir, train=True, download=True, transform=self.test_transform
         )
 
@@ -85,8 +62,8 @@ class MNISTDataModule(lightning.pytorch.LightningDataModule):
     def val_dataloader(self):
         return self.test_loader
 
-    def train_dataset(self):
+    def train_data(self):
         return self.train_data
 
-    def val_dataset(self):
+    def val_data(self):
         return self.test_data

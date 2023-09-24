@@ -364,7 +364,7 @@ def resnet50_decoder(latent_dim, input_height, first_conv, maxpool1):
 
 
 class VAENet(pl.LightningModule):
-    def __init__(self, enc_out_dim=522, latent_dim=256, input_height=32):
+    def __init__(self, enc_out_dim=512, latent_dim=256, input_height=32):
         super().__init__()
 
         self.save_hyperparameters()
@@ -378,3 +378,34 @@ class VAENet(pl.LightningModule):
         # distribution parameters
         self.fc_mu = nn.Linear(enc_out_dim, latent_dim)
         self.fc_var = nn.Linear(enc_out_dim, latent_dim)
+
+
+# if __name__ == "__main__":
+#     vae = VAENet()
+#     # DATA # 512 _> 522
+#     # we're pretending to have an image from cifar-10 (3 channels, 32x32 pixels)
+#     x = torch.rand(1, 3, 32, 32)
+#     y = torch.tensor([1])
+#     y = F.one_hot(y, num_classes=10)
+
+#     print('image shape:', x.shape)
+#     print("label shape", y.shape)
+#     # GET Q(z|x) PARAMETERS
+#     # encode x to get the mu and variance parameters
+#     x_encoded = vae.encoder(x,y)
+#     print("Encoder shape ",x_encoded.shape)
+#     mu, log_var = vae.fc_mu(x_encoded), vae.fc_var(x_encoded)
+#     print('mu:', mu.shape)
+#     print('log_var:', log_var.shape)
+#     # sample z from q
+#     std = torch.exp(log_var / 2)
+#     q = torch.distributions.Normal(mu, std)
+#     z = q.rsample()
+#     # decode
+#     x_hat = vae.decoder(z,y)
+#     # SAMPLE Z from Q(Z|x)
+#     std = torch.exp(log_var / 2)
+#     q = torch.distributions.Normal(mu, std)
+#     z = q.rsample()
+
+#     print('z shape:', z.shape)

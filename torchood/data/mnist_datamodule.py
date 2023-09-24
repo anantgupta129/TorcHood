@@ -1,92 +1,70 @@
-import lightning
-import torch
-import torchvision.transforms as transforms
+from typing import Optional, Union
+
+import albumentations as A
+from lightning.pytorch import LightningDataModule
+from torch.utils.data import DataLoader, Dataset
 from torchvision import datasets
 
-
-class MNISTToRGB:
-    def __call__(self, img):
-        img = torch.cat([img, img, img], dim=0)  # Duplicate the single channel into three channels
-        return img
+from .components.mnist import MNIST, make_transform
 
 
-def create_transforms(variational_auto_encoder=True, train_batch_size=512, val_batch_size=1):
-    # Train data transformations
-    if variational_auto_encoder:
-        train_transforms = transforms.Compose(
-            [
-                transforms.Resize((32, 32)),
-                transforms.ToTensor(),
-                MNISTToRGB(),  # Convert to 3 channels
-                transforms.Normalize((0.1307, 0.1307, 0.1307), (0.3081, 0.3081, 0.3081)),
-            ]
-        )
-
-        # Test data transformations
-        test_transforms = transforms.Compose(
-            [
-                transforms.Resize((32, 32)),
-                transforms.ToTensor(),
-                MNISTToRGB(),  # Convert to 3 channels
-                transforms.Normalize((0.1407, 0.1407, 0.1407), (0.4081, 0.4081, 0.4081)),
-            ]
-        )
-        return train_transforms, test_transforms
-
-    else:
-        train_transforms = transforms.Compose(
-            [
-                transforms.ToTensor(),
-                transforms.Normalize((0.1307), (0.3081)),
-            ]
-        )
-
-        # Test data transformations
-        test_transforms = transforms.Compose(
-            [
-                transforms.ToTensor(),
-                transforms.Normalize((0.1407), (0.4081)),
-            ]
-        )
-        return train_transforms, test_transforms
-
-
-class MNISTDataModule(lightning.pytorch.LightningDataModule):
+class MNIST10DataModule(LightningDataModule):
     def __init__(
-        self, dir="../data", variational_auto_encoder=True, train_batch_size=512, val_batch_size=1
+        self,
+        data_dir: str = "./data",
+        train_batch_size: int = 512,
+        val_batch_size: int = 512,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        train_augments: Union[A.Compose, None] = None,
     ):
         super().__init__()
-        self.train_transform, self.test_transform = create_transforms(
-            variational_auto_encoder=variational_auto_encoder
-        )
-        self.train_data = datasets.MNIST(
-            dir, train=True, download=True, transform=self.train_transform
-        )
-        self.test_data = datasets.MNIST(
-            dir, train=True, download=True, transform=self.test_transform
-        )
 
-        # dataloader arguments - something you'll fetch these from cmdprmt
-        train_dataloader_args = dict(
-            shuffle=True, batch_size=train_batch_size, num_workers=0, pin_memory=True
-        )
-        test_dataloader_args = dict(
-            shuffle=True, batch_size=val_batch_size, num_workers=0, pin_memory=True
-        )
-        # train dataloader
-        self.train_loader = torch.utils.data.DataLoader(self.train_data, **train_dataloader_args)
+        # this line allows to access init params with 'self.hparams' attribute
+        # also ensures init params will be stored in ckpt
+        self.save_hyperparameters(logger=False)
 
-        # test dataloader
-        self.test_loader = torch.utils.data.DataLoader(self.test_data, **test_dataloader_args)
+        self.train_transforms = (
+            make_transform("train") if train_augments is None else train_augments
+        )
+        self.val_transforms = make_transform("val")
+
+        self.data_train: Optional[Dataset] = None
+        self.data_val: Optional[Dataset] = None
+
+    @property
+    def num_classes(self):
+        return 10
+
+    @property
+    def class_names(self):
+        return ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
+
+    def prepare_data(self):
+        # download
+        datasets.MNIST(self.hparams.data_dir, train=True, download=True)
+        datasets.MNIST(self.hparams.data_dir, train=False, download=True)
+
+    def setup(self, stage=None) -> None:
+        # load  only if not loaded already
+        if not self.data_train and not self.data_val:
+            self.data_train = datasets.MNIST(self.hparams.data_dir, train=True)
+            self.data_val = datasets.MNIST(self.hparams.data_dir, train=False)
 
     def train_dataloader(self):
-        return self.train_loader
+        return DataLoader(
+            dataset=MNIST(self.data_train, self.train_transforms),
+            batch_size=self.hparams.train_batch_size,
+            num_workers=self.hparams.num_workers,
+            pin_memory=self.hparams.pin_memory,
+            shuffle=True,
+        )
 
     def val_dataloader(self):
-        return self.test_loader
-
-    def train_dataset(self):
-        return self.train_data
-
-    def val_dataset(self):
-        return self.test_data
+        return DataLoader(
+            dataset=MNIST(self.data_val, self.val_transforms),
+            batch_size=self.hparams.val_batch_size,
+            num_workers=self.hparams.num_workers,
+            pin_memory=self.hparams.pin_memory,
+            shuffle=False,
+        )

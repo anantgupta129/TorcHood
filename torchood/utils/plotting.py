@@ -168,9 +168,8 @@ def plot_couple_examples(model, batch, thresh, iou_thresh, anchors, class_labels
     return plotted_images
 
 
-def plot_vae_examples(train_loader, test_data, vae, mean, std_data, num_of_imges=25):
+def plot_vae_examples(train_loader, classes, vae, mean, std_data, num_of_imges=25):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    classes = test_data.classes
     classmaps = {i: j for i, j in enumerate(classes)}
     output_images = []
     figure(figsize=(8, 3), dpi=300)
